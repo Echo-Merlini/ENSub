@@ -35,7 +35,7 @@ class ClaimApiController extends Controller
             return response()->json(['available' => false]);
         }
 
-        // Also check Namestone
+        // Also check Namestone — if the call fails, treat as taken (safe default)
         $res = Http::withToken($tenant->namestone_api_key)
             ->get(self::NAMESTONE_API . '/search-names', [
                 'domain'      => $tenant->ens_domain,
@@ -43,7 +43,17 @@ class ClaimApiController extends Controller
                 'exact_match' => 1,
             ]);
 
-        $taken = $res->successful() && count($res->json()) > 0;
+        if (! $res->successful()) {
+            \Log::warning('Namestone search-names failed', [
+                'status'  => $res->status(),
+                'body'    => $res->body(),
+                'domain'  => $tenant->ens_domain,
+                'name'    => $name,
+            ]);
+            return response()->json(['available' => false]);
+        }
+
+        $taken = count($res->json()) > 0;
 
         return response()->json(['available' => ! $taken]);
     }
@@ -120,7 +130,12 @@ class ClaimApiController extends Controller
             ]);
 
         if (! $res->successful() || ! ($res->json()['success'] ?? false)) {
-            return response()->json(['error' => 'Failed to register subdomain'], 500);
+            $nsError = $res->json()['message'] ?? $res->json()['error'] ?? $res->body();
+            \Log::error('Namestone set-name failed', [
+                'status' => $res->status(),
+                'body'   => $res->body(),
+            ]);
+            return response()->json(['error' => 'Namestone: ' . $nsError], 500);
         }
 
         // 5. Record in DB
