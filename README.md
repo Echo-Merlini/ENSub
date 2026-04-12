@@ -1,66 +1,66 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ENSub
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Gasless ENS subdomain manager** — lets any ENS domain owner launch a token-gated subdomain claim page in minutes. No code, no gas fees.
 
-## About Laravel
+🌐 **Live:** https://www.ensub.org
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Backend:** Laravel 11 + Filament 3 (admin panel)
+- **Frontend:** Inertia.js + React + Tailwind v3
+- **Auth:** SIWE (Sign In With Ethereum) via web3p/ethereum-util
+- **ENS:** On-chain ownership via Alchemy + EIP-137 namehash
+- **Subdomains:** Namestone API (gasless offchain resolver)
+- **Billing:** Laravel Cashier + Stripe (Pro $9/mo, Business $29/mo)
+- **DB:** SQLite (persistent volume on NAS)
+- **Deploy:** Docker → Coolify (NAS) → Cloudflare Tunnel
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+- Multi-tenant: each ENS owner gets their own branded claim page at `/claim/{slug}`
+- Gate types: open, NFT (ETHscriptions), ERC-721, allowlist
+- Stripe billing with plan-based claim limits (Free: 50, Pro: 500, Business: unlimited)
+- Filament admin panel at `/admin`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Local dev
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+composer install
+npm install --legacy-peer-deps
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm run dev
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Required `.env` keys:**
+```
+ALCHEMY_KEY=           # Ethereum RPC for ENS ownership checks
+WALLETCONNECT_PROJECT_ID=
+STRIPE_KEY=
+STRIPE_SECRET=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PRO=      # price_...
+STRIPE_PRICE_BUSINESS= # price_...
+```
 
-## Laravel Sponsors
+## Deployment (Coolify on NAS)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- App UUID: `tx65hcp19435t5khjwpqh627`
+- Container port: 80 mapped to host port **8181**
+- Traefik dynamic config: `/volume1/docker/ECHO/data/coolify/proxy/dynamic/ensub.yaml`
+- Cloudflare tunnel: `cloudflared-ensub` container (separate from main cloudflared)
+- Persistent SQLite: `/volume1/docker/ECHO/data/ensub/database/database.sqlite`
 
-### Premium Partners
+After each redeploy the container IP changes — but Traefik routes via fixed host port `127.0.0.1:8181` so no manual updates needed.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Stripe webhook
 
-## Contributing
+Registered at: `https://www.ensub.org/stripe/webhook`
+Webhook ID: `we_1TLUw4Hy6KPYkr46RrkDb9ke`
+Events: `customer.subscription.created/updated/deleted`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## GitHub
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+https://github.com/Echo-Merlini/ENSub
