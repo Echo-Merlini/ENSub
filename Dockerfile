@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: PHP-FPM + Nginx ──────────────────────────────────────────────────
-FROM php:8.3-fpm-alpine AS app
+FROM php:8.4-fpm-alpine AS app
 
 # System deps
 RUN apk add --no-cache \
