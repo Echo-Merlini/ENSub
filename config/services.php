@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'alchemy' => [
+        'key' => env('ALCHEMY_KEY'),
+    ],
+
 ];
