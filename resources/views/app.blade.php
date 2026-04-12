@@ -7,6 +7,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])
         @inertiaHead
+        <script>window.__WALLETCONNECT_PROJECT_ID__ = "{{ env('WALLETCONNECT_PROJECT_ID', '') }}";</script>
     </head>
     <body class="antialiased">
         @inertia
