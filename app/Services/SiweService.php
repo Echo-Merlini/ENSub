@@ -32,6 +32,11 @@ class SiweService
         ]);
     }
 
+    public function getCachedMessage(string $address): string
+    {
+        return Cache::get("siwe_message_{$address}", '');
+    }
+
     public function verifySignature(string $address, string $signature, string $nonce): bool
     {
         $storedNonce   = Cache::get("siwe_nonce_{$address}");

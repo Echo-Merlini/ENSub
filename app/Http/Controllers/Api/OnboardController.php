@@ -27,7 +27,7 @@ class OnboardController extends Controller
         }
 
         $nonce   = $this->siwe->generateNonce($address);
-        $message = $this->siwe->buildMessage($address, $nonce);
+        $message = $this->siwe->getCachedMessage($address);
 
         return response()->json(['nonce' => $nonce, 'message' => $message]);
     }
