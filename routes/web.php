@@ -12,7 +12,8 @@ Route::get('/start', fn () => Inertia::render('Onboard'))->name('onboard');
 Route::get('/pricing', fn () => Inertia::render('Pricing', ['slug' => request()->query('slug')]))->name('pricing');
 
 // Public claim pages
-Route::get('/claim/{slug}', [ClaimController::class, 'show'])->name('claim.show');
+Route::get('/claim/{slug}',    [ClaimController::class, 'show'])->name('claim.show');
+Route::get('/claim/{slug}/my', [ClaimController::class, 'my'])->name('claim.my');
 
 // Claim API (stateless JSON)
 Route::prefix('api/claim/{slug}')->group(function () {

@@ -156,10 +156,17 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
                 <p style={{ color: '#888', fontSize: '0.875rem' }}>You already claimed</p>
                 <p style={{ color: accent, fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>{claimedName}</p>
-                <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                    style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                    View on ENS →
-                </a>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
+                    <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
+                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        View on ENS →
+                    </a>
+                    <span style={{ color: '#3a3a3a' }}>·</span>
+                    <a href={`/claim/${tenant.slug}/my`}
+                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        My name page →
+                    </a>
+                </div>
             </div>
         )
     }
@@ -171,10 +178,17 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <p style={{ color: '#888', fontSize: '0.875rem' }}>Successfully claimed!</p>
                 <p style={{ color: accent, fontSize: '1.4rem', fontWeight: 'bold', margin: '8px 0',
                     textShadow: `0 0 20px ${accent}` }}>{claimedName}</p>
-                <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                    style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                    View on ENS →
-                </a>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
+                    <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
+                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        View on ENS →
+                    </a>
+                    <span style={{ color: '#3a3a3a' }}>·</span>
+                    <a href={`/claim/${tenant.slug}/my`}
+                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        Bookmark my name →
+                    </a>
+                </div>
             </div>
         )
     }
