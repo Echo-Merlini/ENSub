@@ -29,7 +29,7 @@ class TenantResource extends Resource
                         ->label('ENS Domain'),
                     Forms\Components\TextInput::make('slug')
                         ->required()->placeholder('pixel-goblins')
-                        ->helperText('Used in the public claim URL: ensub.xyz/claim/{slug}'),
+                        ->helperText('Used in the public claim URL: ensub.org/claim/{slug}'),
                     Forms\Components\TextInput::make('owner_address')
                         ->required()->placeholder('0x...')
                         ->label('Owner Wallet'),

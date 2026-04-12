@@ -39,4 +39,9 @@ return [
         'key' => env('ALCHEMY_KEY'),
     ],
 
+    'stripe' => [
+        'price_pro'      => env('STRIPE_PRICE_PRO'),
+        'price_business' => env('STRIPE_PRICE_BUSINESS'),
+    ],
+
 ];
