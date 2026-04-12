@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+class Tenant extends Model
+{
+    protected $fillable = [
+        'name', 'ens_domain', 'owner_address', 'namestone_api_key',
+        'slug', 'logo_url', 'accent_color', 'plan', 'active', 'claim_limit',
+    ];
+
+    protected $casts = [
+        'active' => 'boolean',
+        'claim_limit' => 'integer',
+    ];
+
+    protected $hidden = ['namestone_api_key'];
+
+    public function gateConfig(): HasOne
+    {
+        return $this->hasOne(GateConfig::class);
+    }
+
+    public function claims(): HasMany
+    {
+        return $this->hasMany(Claim::class);
+    }
+
+    public function isAtLimit(): bool
+    {
+        return $this->claims()->count() >= $this->claim_limit;
+    }
+}
