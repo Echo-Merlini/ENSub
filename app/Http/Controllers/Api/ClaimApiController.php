@@ -36,7 +36,7 @@ class ClaimApiController extends Controller
         }
 
         // Also check Namestone — if the call fails, treat as taken (safe default)
-        $res = Http::withToken($tenant->namestone_api_key)
+        $res = Http::withHeaders(['Authorization' => $tenant->namestone_api_key])
             ->get(self::NAMESTONE_API . '/search-names', [
                 'domain'      => $tenant->ens_domain,
                 'name'        => $name,
@@ -122,7 +122,7 @@ class ClaimApiController extends Controller
         }
 
         // 4. Register via Namestone
-        $res = Http::withToken($tenant->namestone_api_key)
+        $res = Http::withHeaders(['Authorization' => $tenant->namestone_api_key])
             ->post(self::NAMESTONE_API . '/set-name', [
                 'domain'  => $tenant->ens_domain,
                 'name'    => $name,
