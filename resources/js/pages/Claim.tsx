@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WagmiProvider, useAccount } from 'wagmi'
+import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton } from '@rainbow-me/rainbowkit'
-import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import {
+    injectedWallet,
+    metaMaskWallet,
+    rainbowWallet,
+    coinbaseWallet,
+    walletConnectWallet,
+    safeWallet,
+} from '@rainbow-me/rainbowkit/wallets'
 import { mainnet } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
@@ -20,10 +27,26 @@ interface Tenant {
 
 const queryClient = new QueryClient()
 
-const wagmiConfig = getDefaultConfig({
-    appName: 'ENSub',
-    projectId: (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a',
+const _projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
+const wagmiConfig = createConfig({
     chains: [mainnet],
+    connectors: connectorsForWallets(
+        [
+            {
+                groupName: 'Popular',
+                wallets: [
+                    injectedWallet,
+                    metaMaskWallet,
+                    rainbowWallet,
+                    coinbaseWallet,
+                    walletConnectWallet,
+                    safeWallet,
+                ],
+            },
+        ],
+        { appName: 'ENSub', projectId: _projectId }
+    ),
+    transports: { [mainnet.id]: http() },
     ssr: false,
 })
 
