@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use kornrunner\Keccak;
 use Web3p\EthereumUtil\Util;
 
 class SiweService
@@ -25,7 +26,7 @@ class SiweService
             'ensub.org wants you to sign in with your Ethereum account:',
             $address,
             '',
-            'Sign in to ENSub — ensub.org',
+            'Sign in to ENSub',
             '',
             'Nonce: ' . $nonce,
             'Issued At: ' . now()->toIso8601String(),
@@ -47,18 +48,34 @@ class SiweService
         }
 
         try {
-            $util    = new Util();
-            $prefixedHash  = $util->hashPersonalMessage($storedMessage);
-            $recovered     = $util->recoverPublicKey($prefixedHash, $signature);
-            $recoveredAddr = strtolower('0x' . substr($util->publicKeyToAddress($recovered), -40));
+            // Build personal message hash using byte length (strlen), not char length (mb_strlen)
+            // MetaMask uses: "\x19Ethereum Signed Message:\n{byteLength}{message}"
+            $prefix = "\x19Ethereum Signed Message:\n" . strlen($storedMessage);
+            $hash   = '0x' . Keccak::hash($prefix . $storedMessage, 256);
 
-            if ($recoveredAddr === strtolower($address)) {
+            // Parse the 65-byte signature: 0x{r:64}{s:64}{v:2}
+            $sig = ltrim($signature, '0x');
+            if (strlen($sig) !== 130) {
+                return false;
+            }
+            $r = '0x' . substr($sig, 0, 64);
+            $s = '0x' . substr($sig, 64, 64);
+            $v = hexdec(substr($sig, 128, 2));
+            if ($v >= 27) {
+                $v -= 27; // normalize to 0 or 1
+            }
+
+            $util      = new Util();
+            $publicKey = $util->recoverPublicKey($hash, $r, $s, $v);
+            $recovered = strtolower($util->publicKeyToAddress($publicKey));
+
+            if ($recovered === strtolower($address)) {
                 Cache::forget("siwe_nonce_{$address}");
                 Cache::forget("siwe_message_{$address}");
                 return true;
             }
-        } catch (\Throwable) {
-            // signature parse error
+        } catch (\Throwable $e) {
+            \Log::debug('SIWE verify failed: ' . $e->getMessage());
         }
 
         return false;

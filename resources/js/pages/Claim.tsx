@@ -28,6 +28,10 @@ interface Tenant {
 const queryClient = new QueryClient()
 
 const _projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
+const _alchemyKey = (window as any).__ALCHEMY_KEY__
+const _rpcUrl = _alchemyKey
+    ? `https://eth-mainnet.g.alchemy.com/v2/${_alchemyKey}`
+    : 'https://cloudflare-eth.com'
 const wagmiConfig = createConfig({
     chains: [mainnet],
     connectors: connectorsForWallets(
@@ -46,7 +50,7 @@ const wagmiConfig = createConfig({
         ],
         { appName: 'ENSub', projectId: _projectId }
     ),
-    transports: { [mainnet.id]: http() },
+    transports: { [mainnet.id]: http(_rpcUrl) },
     ssr: false,
 })
 

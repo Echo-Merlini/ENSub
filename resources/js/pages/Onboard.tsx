@@ -17,6 +17,10 @@ const queryClient = new QueryClient()
 
 function getWagmiConfig() {
     const projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
+    const alchemyKey = (window as any).__ALCHEMY_KEY__
+    const rpcUrl = alchemyKey
+        ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://cloudflare-eth.com'
 
     const connectors = connectorsForWallets(
         [
@@ -38,7 +42,7 @@ function getWagmiConfig() {
     return createConfig({
         chains: [mainnet],
         connectors,
-        transports: { [mainnet.id]: http() },
+        transports: { [mainnet.id]: http(rpcUrl) },
         ssr: false,
     })
 }
