@@ -3,42 +3,40 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use kornrunner\Keccak;
 
 class EnsService
 {
-    private const REGISTRY = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+    private const REGISTRY     = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+    private const NAME_WRAPPER = '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
 
-    // Compute ENS namehash (EIP-137)
+    // Compute ENS namehash (EIP-137) — hashes raw bytes, not hex strings
     public function namehash(string $name): string
     {
-        $node = str_repeat("\x00", 32);
+        $node = str_repeat("\x00", 32); // 32 zero bytes
 
         if ($name === '') {
             return '0x' . bin2hex($node);
         }
 
-        $labels = array_reverse(explode('.', $name));
-
-        foreach ($labels as $label) {
-            $labelHash = hex2bin(substr(keccak256($label), 2));
-            $node      = hex2bin(substr(keccak256(bin2hex($node . $labelHash)), 2));
+        foreach (array_reverse(explode('.', $name)) as $label) {
+            $labelHash = hex2bin(Keccak::hash($label, 256));           // keccak256(label bytes) → 32 bytes
+            $node      = hex2bin(Keccak::hash($node . $labelHash, 256)); // keccak256(node ++ labelHash) → 32 bytes
         }
 
         return '0x' . bin2hex($node);
     }
 
-    // Check who owns an ENS name via the registry
-    public function getOwner(string $ensDomain): ?string
+    // Low-level eth_call helper — returns the address from a 32-byte result
+    private function ethCall(string $to, string $selector, string $param): ?string
     {
-        $namehash = $this->namehash($ensDomain);
-
-        // owner(bytes32) = 0x02571be3
-        $data = '0x02571be3' . str_pad(substr($namehash, 2), 64, '0', STR_PAD_LEFT);
+        $paddedParam = str_pad(ltrim($param, '0x'), 64, '0', STR_PAD_LEFT);
+        $data        = $selector . $paddedParam;
 
         $res = Http::post('https://eth-mainnet.g.alchemy.com/v2/' . config('services.alchemy.key'), [
             'jsonrpc' => '2.0',
             'method'  => 'eth_call',
-            'params'  => [['to' => self::REGISTRY, 'data' => $data], 'latest'],
+            'params'  => [['to' => $to, 'data' => $data], 'latest'],
             'id'      => 1,
         ]);
 
@@ -47,18 +45,39 @@ class EnsService
         }
 
         $result = $res->json()['result'] ?? '0x';
+
         if (strlen($result) < 66) {
             return null;
         }
 
-        $address = '0x' . substr($result, -40);
+        $address = strtolower('0x' . substr($result, -40));
 
-        // Zero address means not registered
+        // Zero address = not set
         if ($address === '0x' . str_repeat('0', 40)) {
             return null;
         }
 
-        return strtolower($address);
+        return $address;
+    }
+
+    public function getOwner(string $ensDomain): ?string
+    {
+        $namehash = $this->namehash($ensDomain);
+
+        // 1. Check ENS registry: owner(bytes32)
+        $registryOwner = $this->ethCall(self::REGISTRY, '0x02571be3', $namehash);
+
+        if ($registryOwner === null) {
+            return null;
+        }
+
+        // 2. If the registry owner is the Name Wrapper, check ownerOf(uint256) there
+        //    Most names registered after May 2023 are wrapped.
+        if ($registryOwner === strtolower(self::NAME_WRAPPER)) {
+            return $this->ethCall(self::NAME_WRAPPER, '0x6352211e', $namehash);
+        }
+
+        return $registryOwner;
     }
 
     public function isOwnedBy(string $ensDomain, string $walletAddress): bool
@@ -66,11 +85,4 @@ class EnsService
         $owner = $this->getOwner($ensDomain);
         return $owner !== null && $owner === strtolower($walletAddress);
     }
-}
-
-// Standalone keccak256 helper (uses web3p under the hood)
-function keccak256(string $input, bool $rawInput = false): string
-{
-    $util = new \Web3p\EthereumUtil\Util();
-    return $util->sha3($rawInput ? $input : $input);
 }
