@@ -22,7 +22,7 @@ const queryClient = new QueryClient()
 
 const wagmiConfig = getDefaultConfig({
     appName: 'ENSub',
-    projectId: (window as any).__WALLETCONNECT_PROJECT_ID__ || 'ensub',
+    projectId: (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a',
     chains: [mainnet],
     ssr: false,
 })

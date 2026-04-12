@@ -7,12 +7,19 @@ import { mainnet } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
 const queryClient = new QueryClient()
-const wagmiConfig = getDefaultConfig({
-    appName: 'ENSub',
-    projectId: (window as any).__WALLETCONNECT_PROJECT_ID__ || 'ensub',
-    chains: [mainnet],
-    ssr: false,
-})
+
+function getWagmiConfig() {
+    const projectId = (window as any).__WALLETCONNECT_PROJECT_ID__
+    if (!projectId) console.warn('[ENSub] WalletConnect project ID missing')
+    return getDefaultConfig({
+        appName: 'ENSub',
+        projectId: projectId || '3b3f1c4ecbfa7edd5c5327b56985074a',
+        chains: [mainnet],
+        ssr: false,
+    })
+}
+
+const wagmiConfig = getWagmiConfig()
 
 const ACCENT = '#00ff88'
 
