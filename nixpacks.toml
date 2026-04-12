@@ -1,0 +1,20 @@
+[phases.setup]
+nixPkgs = ["php84", "php84Extensions.pdo", "php84Extensions.pdo_sqlite", "php84Extensions.opcache", "php84Extensions.pcntl", "nodejs_20", "nodePackages.npm"]
+
+[phases.install]
+cmds = [
+  "npm ci --legacy-peer-deps",
+  "composer install --no-dev --no-interaction --prefer-dist"
+]
+
+[phases.build]
+cmds = [
+  "npm run build",
+  "php artisan config:clear",
+  "php artisan storage:link",
+  "mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache",
+  "chmod -R 775 storage bootstrap/cache"
+]
+
+[start]
+cmd = "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan serve --host=0.0.0.0 --port=8000"
