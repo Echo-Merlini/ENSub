@@ -51,9 +51,12 @@ RUN php artisan config:clear \
  && chmod -R 775 storage bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache public/build
 
-# SQLite database file (persistent volume should be mounted at /var/www/html/database)
-RUN touch database/database.sqlite \
- && chown www-data:www-data database/database.sqlite
+# SQLite — directory must be writable for journal files; file is bind-mounted at runtime
+RUN chown www-data:www-data database \
+ && chmod 775 database \
+ && touch database/database.sqlite \
+ && chown www-data:www-data database/database.sqlite \
+ && chmod 664 database/database.sqlite
 
 # ── Nginx config ──────────────────────────────────────────────────────────────
 RUN rm -f /etc/nginx/http.d/default.conf
