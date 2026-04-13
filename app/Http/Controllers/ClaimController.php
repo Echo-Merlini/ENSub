@@ -35,15 +35,16 @@ class ClaimController extends Controller
 
         return Inertia::render('Claim', [
             'tenant' => [
-                'name'         => $tenant->name,
-                'ens_domain'   => $tenant->ens_domain,
-                'slug'         => $tenant->slug,
-                'logo_url'     => $tenant->logo_url,
-                'accent_color' => $tenant->accent_color,
-                'claim_limit'  => $tenant->claim_limit,
-                'claims_count' => $tenant->claims()->count(),
-                'at_limit'     => $tenant->isAtLimit(),
-                'gate_type'    => $tenant->gateConfig?->type ?? 'open',
+                'name'          => $tenant->name,
+                'ens_domain'    => $tenant->ens_domain,
+                'slug'          => $tenant->slug,
+                'owner_address' => $tenant->owner_address,
+                'logo_url'      => $tenant->logo_url,
+                'accent_color'  => $tenant->accent_color,
+                'claim_limit'   => $tenant->claim_limit,
+                'claims_count'  => $tenant->claims()->count(),
+                'at_limit'      => $tenant->isAtLimit(),
+                'gate_type'     => $tenant->gateConfig?->type ?? 'open',
             ],
         ]);
     }

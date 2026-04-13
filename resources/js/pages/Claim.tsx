@@ -17,6 +17,7 @@ interface Tenant {
     name: string
     ens_domain: string
     slug: string
+    owner_address: string
     logo_url: string | null
     accent_color: string
     claim_limit: number
@@ -53,6 +54,28 @@ const wagmiConfig = createConfig({
     transports: { [mainnet.id]: http(_rpcUrl) },
     ssr: false,
 })
+
+function OwnerControls({ tenant }: { tenant: Tenant }) {
+    const { address, isConnected } = useAccount()
+    if (!isConnected || address?.toLowerCase() !== tenant.owner_address.toLowerCase()) return null
+    return (
+        <a
+            href={`/manage/${tenant.slug}`}
+            style={{
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                border: `1px solid ${tenant.accent_color}55`,
+                color: tenant.accent_color,
+                textDecoration: 'none',
+                letterSpacing: '0.04em',
+            }}
+        >
+            ⚙ Manage
+        </a>
+    )
+}
 
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'claiming' | 'claimed' | 'error' | 'already-claimed' | 'not-eligible'
 
@@ -295,7 +318,10 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                     {tenant.name}
                                 </span>
                             </div>
-                            <ConnectButton />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <OwnerControls tenant={tenant} />
+                                <ConnectButton />
+                            </div>
                         </header>
 
                         {/* Content */}
