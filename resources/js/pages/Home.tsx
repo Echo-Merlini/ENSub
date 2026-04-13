@@ -1,4 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+function useDarkMode() {
+    const [dark, setDark] = useState(() => {
+        if (typeof window === 'undefined') return true
+        const saved = localStorage.getItem('theme')
+        return saved ? saved === 'dark' : true // default dark
+    })
+
+    useEffect(() => {
+        const root = document.documentElement
+        if (dark) {
+            root.classList.remove('light')
+        } else {
+            root.classList.add('light')
+        }
+        localStorage.setItem('theme', dark ? 'dark' : 'light')
+    }, [dark])
+
+    return [dark, setDark] as const
+}
 
 const ACCENT = '#00ff88'
 
@@ -160,6 +180,8 @@ function FAQ() {
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+    const [dark, setDark] = useDarkMode()
+
     return (
         <main style={{ minHeight: '100vh', overflowX: 'hidden' }}>
 
@@ -179,6 +201,28 @@ export default function Home() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                     <a href="#pricing" style={{ color: '#888', fontSize: '0.875rem', textDecoration: 'none' }}>Pricing</a>
                     <a href="#how" style={{ color: '#888', fontSize: '0.875rem', textDecoration: 'none' }}>How it works</a>
+                    <button
+                        onClick={() => setDark(d => !d)}
+                        title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+                        style={{
+                            background: 'none',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '6px',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.85rem',
+                            padding: 0,
+                            color: '#666',
+                            transition: 'border-color 0.2s, color 0.2s',
+                            flexShrink: 0,
+                        }}
+                    >
+                        {dark ? '☀' : '☾'}
+                    </button>
                     <a href="/start" style={btnPrimary}>Get started →</a>
                 </div>
             </nav>

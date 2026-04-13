@@ -19,3 +19,64 @@ body {
     color: var(--text);
     -webkit-font-smoothing: antialiased;
 }
+
+/* Light mode — toggled by adding .light to <html> */
+html.light {
+    --bg-primary:   #f0f2f5;
+    --bg-secondary: #e2e8f0;
+    --border:       rgba(0, 0, 0, 0.08);
+    --text:         #0f1117;
+    --text-muted:   #4b5563;
+}
+
+/* Flip the dark inline-style surfaces when in light mode */
+html.light body {
+    background: var(--bg-primary);
+    color: var(--text);
+}
+
+html.light nav,
+html.light header {
+    background: rgba(240, 242, 245, 0.9) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light main {
+    background: var(--bg-primary);
+}
+
+/* Cards — the rgba(22,33,62,…) surfaces */
+html.light [style*="rgba(22,33,62"],
+html.light [style*="rgba(22, 33, 62"] {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Muted text */
+html.light [style*="color: #888"],
+html.light [style*="color: #555"],
+html.light [style*="color: #666"],
+html.light [style*="color: #aaa"],
+html.light [style*="color: #ccc"] {
+    color: #4b5563 !important;
+}
+
+html.light [style*="color: #e4e4e4"],
+html.light [style*="color: #ddd"] {
+    color: #0f1117 !important;
+}
+
+/* Nav links */
+html.light nav a[style*="color: #888"] {
+    color: #4b5563 !important;
+}
+
+/* Footer */
+html.light footer {
+    border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light footer [style*="color: #444"],
+html.light footer [style*="color: #2a2a2a"],
+html.light footer [style*="color: #1e1e1e"] {
+    color: #9ca3af !important;
+}

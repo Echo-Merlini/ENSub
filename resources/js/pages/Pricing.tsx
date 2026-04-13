@@ -147,7 +147,7 @@ export default function Pricing({ slug }: Props) {
                 </div>
 
                 {/* Email input (shown when plan selected without email) */}
-                {emailFor && !email && (
+                {emailFor && (
                     <div style={{
                         background: 'rgba(22,33,62,0.7)',
                         border: `1px solid ${ACCENT}33`,
