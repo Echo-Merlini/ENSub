@@ -46,9 +46,9 @@ class TenantResource extends Resource
                         ->default('#00ff88'),
                     Forms\Components\Select::make('plan')
                         ->options([
-                            'free'    => 'Free',
-                            'starter' => 'Starter',
-                            'pro'     => 'Pro',
+                            'free'     => 'Free',
+                            'pro'      => 'Pro ($9/mo)',
+                            'business' => 'Business ($29/mo)',
                         ])->default('free')->required(),
                     Forms\Components\TextInput::make('claim_limit')
                         ->numeric()->default(50)->required()
@@ -72,10 +72,10 @@ class TenantResource extends Resource
                 Tables\Columns\TextColumn::make('plan')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        'free'    => 'gray',
-                        'starter' => 'info',
-                        'pro'     => 'warning',
-                        default   => 'gray',
+                        'free'     => 'gray',
+                        'pro'      => 'warning',
+                        'business' => 'info',
+                        default    => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('claims_count')
                     ->label('Claims')
@@ -90,7 +90,7 @@ class TenantResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('plan')
-                    ->options(['free' => 'Free', 'starter' => 'Starter', 'pro' => 'Pro']),
+                    ->options(['free' => 'Free', 'pro' => 'Pro', 'business' => 'Business']),
                 Tables\Filters\TernaryFilter::make('active'),
             ])
             ->actions([
