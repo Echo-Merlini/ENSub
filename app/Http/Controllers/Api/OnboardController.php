@@ -235,6 +235,16 @@ class OnboardController extends Controller
             return response()->json(['error' => $error], 422);
         }
 
-        return response()->json(['success' => true]);
+        $body = $res->json() ?? [];
+        \Log::info('Namestone enable-domain success', [
+            'status' => $res->status(),
+            'body'   => $res->body(),
+            'domain' => $validated['domain'],
+        ]);
+
+        // Namestone may return the API key directly in the response
+        $apiKey = $body['api_key'] ?? $body['apiKey'] ?? $body['key'] ?? null;
+
+        return response()->json(['success' => true, 'api_key' => $apiKey]);
     }
 }

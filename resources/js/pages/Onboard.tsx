@@ -588,6 +588,7 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
             })
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || 'Enable failed')
+            if (data.api_key) setApiKey(data.api_key)
             setEnableStatus('done')
         } catch (e: any) {
             setEnableError(e.message || 'Something went wrong')
