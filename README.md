@@ -15,10 +15,24 @@
 - **DB:** SQLite (persistent volume on NAS)
 - **Deploy:** Docker → Coolify (NAS) → Cloudflare Tunnel
 
+## Onboarding flow
+
+1. **Verify wallet** — SIWE nonce/signature to prove ENS ownership
+2. **ENS domain** — checks on-chain ownership via Alchemy + ENS Registry
+3. **Eligibility** — gate config: open / NFT / allowlist
+4. **Set resolver** — in-app on-chain tx to point ENS to Namestone's resolver (`0xA87361c4E58B619c390f469B9E6F27d759715125`); detects wrapped vs unwrapped domains (Name Wrapper aware); auto-skips if resolver already set
+5. **Namestone API key** — "Enable via wallet" button: fetches SIWE message from Namestone, user signs once, backend calls `POST /enable-domain`; API key auto-populated from response; security warning shown once key is visible
+
 ## Features
 
 - Multi-tenant: each ENS owner gets their own branded claim page at `/claim/{slug}`
-- Gate types: open, NFT (ETHscriptions), ERC-721, allowlist
+- Gate types: open, NFT (ETHscriptions/ERC-721), allowlist
+- **Manage page** (owner-only, wallet-verified):
+  - Edit branding, gate config, Namestone API key, claim limit
+  - Claims list with per-row revoke (removes from Namestone + DB)
+  - Share card: Twitter/X, Farcaster, copy-link buttons
+  - Embed card (Pro/Business only): copy-able `<iframe>` snippet for external sites; free plan shows upgrade prompt
+- **Claim page**: "⚙ Manage" button visible only to the ENS owner wallet; social share bar (Twitter/X, Farcaster, copy link) for all visitors
 - Stripe billing with plan-based claim limits (Free: 50, Pro: 500, Business: unlimited)
 - Filament admin panel at `/admin`
 
