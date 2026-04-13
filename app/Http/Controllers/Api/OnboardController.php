@@ -185,6 +185,8 @@ class OnboardController extends Controller
 
         $res = Http::get('https://namestone.com/api/public_v1/get-siwe-message', [
             'address' => $address,
+            'domain'  => 'ensub.org',
+            'uri'     => 'https://ensub.org',
         ]);
 
         if (! $res->successful()) {
