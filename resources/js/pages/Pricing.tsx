@@ -16,10 +16,10 @@ const plans = [
         limits: { claims: 500, limit_label: '500 claims' },
         features: [
             '500 total claims',
-            'All gate types',
-            'Custom logo + branding',
-            'Remove ENSub badge',
-            'Priority support',
+            'All gate types (NFT, token, allowlist)',
+            'No ENSub badge',
+            'Embeddable claim widget',
+            'Priority email support',
         ],
     },
     {
@@ -30,12 +30,11 @@ const plans = [
         highlight: false,
         limits: { claims: 10000, limit_label: 'Unlimited claims' },
         features: [
-            'Unlimited claims',
-            '5 ENS domains',
-            'All gate types',
-            'Custom logo + branding',
-            'Remove ENSub badge',
-            'Slack/email support',
+            'Unlimited claims (up to 10k)',
+            'All gate types (NFT, token, allowlist)',
+            'No ENSub badge',
+            'Embeddable claim widget',
+            'Slack + email support',
         ],
     },
 ]
@@ -210,7 +209,7 @@ export default function Pricing({ slug }: Props) {
                             <span style={{ fontSize: '2.2rem', fontWeight: 'bold', color: '#666' }}>$0</span>
                         </div>
                         <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {['50 total claims', 'Open or NFT gate', 'Custom accent colour', 'ENSub badge'].map(f => (
+                            {['50 total claims', 'Open or NFT gate', 'Custom logo & accent colour', 'ENSub badge shown'].map(f => (
                                 <li key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.875rem', color: '#555' }}>
                                     <span style={{ color: '#444' }}>✓</span>{f}
                                 </li>

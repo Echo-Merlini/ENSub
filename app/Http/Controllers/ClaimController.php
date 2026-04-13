@@ -47,6 +47,7 @@ class ClaimController extends Controller
                 'claims_count'  => $tenant->claims()->count(),
                 'at_limit'      => $tenant->isAtLimit(),
                 'gate_type'     => $tenant->gateConfig?->type ?? 'open',
+                'plan'          => $tenant->plan,
             ],
         ]);
     }
@@ -66,9 +67,11 @@ class ClaimController extends Controller
                 'claim_limit'       => $tenant->claim_limit,
                 'claims_count'      => $tenant->claims()->count(),
                 'plan'              => $tenant->plan,
-                'gate_type'         => $tenant->gateConfig?->type ?? 'open',
-                'contract_address'  => $tenant->gateConfig?->contract_address,
-                'collection_slug'   => $tenant->gateConfig?->collection_slug,
+                'gate_type'           => $tenant->gateConfig?->type ?? 'open',
+                'contract_address'    => $tenant->gateConfig?->contract_address,
+                'collection_slug'     => $tenant->gateConfig?->collection_slug,
+                'min_balance'         => $tenant->gateConfig?->min_balance,
+                'allowlist_addresses' => $tenant->gateConfig?->allowlist_addresses,
                 'namestone_api_key' => $tenant->namestone_api_key,
                 'claims'            => $tenant->claims()->latest()->get()->map(fn($c) => [
                     'id'             => $c->id,
@@ -117,14 +120,16 @@ class ClaimController extends Controller
         }
 
         $validated = $request->validate([
-            'name'             => 'required|string|max:80',
-            'logo_url'         => 'nullable|url|max:500',
-            'accent_color'     => 'nullable|string|max:7',
-            'namestone_api_key'=> 'required|string',
-            'gate_type'        => 'required|in:open,nft,token,allowlist',
-            'contract_address' => 'nullable|string',
-            'collection_slug'  => 'nullable|string',
-            'claim_limit'      => 'nullable|integer|min:1|max:50000',
+            'name'                => 'required|string|max:80',
+            'logo_url'            => 'nullable|url|max:500',
+            'accent_color'        => 'nullable|string|max:7',
+            'namestone_api_key'   => 'required|string',
+            'gate_type'           => 'required|in:open,nft,token,allowlist',
+            'contract_address'    => 'nullable|string',
+            'collection_slug'     => 'nullable|string',
+            'min_balance'         => 'nullable|numeric|min:0',
+            'allowlist_addresses' => 'nullable|string',
+            'claim_limit'         => 'nullable|integer|min:1|max:50000',
         ]);
 
         $tenant->update([
@@ -142,10 +147,12 @@ class ClaimController extends Controller
             $tenant->gateConfig()->updateOrCreate(
                 ['tenant_id' => $tenant->id],
                 [
-                    'type'             => $validated['gate_type'],
-                    'contract_address' => $validated['contract_address'] ?? null,
-                    'collection_slug'  => $validated['collection_slug'] ?? null,
-                    'max_per_wallet'   => 1,
+                    'type'                => $validated['gate_type'],
+                    'contract_address'    => $validated['contract_address'] ?? null,
+                    'collection_slug'     => $validated['collection_slug'] ?? null,
+                    'min_balance'         => $validated['min_balance'] ?? null,
+                    'allowlist_addresses' => $validated['allowlist_addresses'] ?? null,
+                    'max_per_wallet'      => 1,
                 ]
             );
         }

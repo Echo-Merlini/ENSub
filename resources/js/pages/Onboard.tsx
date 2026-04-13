@@ -320,25 +320,39 @@ interface GateConfig {
     gate_type: GateType
     contract_address: string
     collection_slug: string
+    min_balance: string
+    allowlist_addresses: string
 }
 
 function Step3({ onDone }: { onDone: (config: GateConfig) => void }) {
     const [gateType, setGateType] = useState<GateType>('open')
     const [contractAddress, setContractAddress] = useState('')
     const [collectionSlug, setCollectionSlug] = useState('')
+    const [minBalance, setMinBalance] = useState('1')
+    const [allowlistAddresses, setAllowlistAddresses] = useState('')
 
     const gates: { value: GateType; label: string; desc: string }[] = [
-        { value: 'open', label: 'Open', desc: 'Anyone can claim' },
-        { value: 'nft', label: 'NFT Holders', desc: 'Requires an NFT from a collection' },
-        { value: 'token', label: 'Token Holders', desc: 'Requires an ERC-20 token balance' },
-        { value: 'allowlist', label: 'Allowlist', desc: 'Only approved wallets' },
+        { value: 'open',      label: 'Open',          desc: 'Anyone can claim' },
+        { value: 'nft',       label: 'NFT Holders',   desc: 'ERC-721 or ETHscriptions collection' },
+        { value: 'token',     label: 'Token Holders', desc: 'Requires a minimum ERC-20 balance' },
+        { value: 'allowlist', label: 'Allowlist',     desc: 'Only specific wallet addresses' },
     ]
 
-    const handleNext = () => {
-        onDone({ gate_type: gateType, contract_address: contractAddress, collection_slug: collectionSlug })
-    }
+    const canProceed =
+        gateType === 'open' ||
+        (gateType === 'nft' && (contractAddress.trim() || collectionSlug.trim())) ||
+        (gateType === 'token' && contractAddress.trim()) ||
+        (gateType === 'allowlist' && allowlistAddresses.trim())
 
-    const canProceed = gateType === 'open' || contractAddress || collectionSlug
+    const handleNext = () => {
+        onDone({
+            gate_type: gateType,
+            contract_address: contractAddress.trim(),
+            collection_slug: collectionSlug.trim(),
+            min_balance: minBalance.trim() || '1',
+            allowlist_addresses: allowlistAddresses.trim(),
+        })
+    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -359,15 +373,9 @@ function Step3({ onDone }: { onDone: (config: GateConfig) => void }) {
                         style={{
                             background: gateType === g.value ? `${ACCENT}14` : 'rgba(255,255,255,0.03)',
                             border: `1.5px solid ${gateType === g.value ? ACCENT + '66' : 'rgba(255,255,255,0.07)'}`,
-                            borderRadius: '10px',
-                            padding: '14px 18px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                            gap: '2px',
-                            transition: 'all 0.15s',
-                            textAlign: 'left',
+                            borderRadius: '10px', padding: '14px 18px', cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                            gap: '2px', transition: 'all 0.15s', textAlign: 'left',
                         }}
                     >
                         <span style={{ color: gateType === g.value ? ACCENT : '#ccc', fontWeight: 'bold', fontSize: '0.9rem' }}>
@@ -378,30 +386,55 @@ function Step3({ onDone }: { onDone: (config: GateConfig) => void }) {
                 ))}
             </div>
 
-            {(gateType === 'nft' || gateType === 'token') && (
+            {gateType === 'nft' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    {gateType === 'nft' && (
-                        <div>
-                            <label style={label}>Collection Slug (ETHscriptions)</label>
-                            <input
-                                style={input}
-                                type="text"
-                                placeholder="e.g. pixel-goblins"
-                                value={collectionSlug}
-                                onChange={e => setCollectionSlug(e.target.value)}
-                            />
-                        </div>
-                    )}
                     <div>
-                        <label style={label}>Contract Address (ERC-721 / ERC-20)</label>
-                        <input
-                            style={input}
-                            type="text"
-                            placeholder="0x..."
-                            value={contractAddress}
-                            onChange={e => setContractAddress(e.target.value)}
-                        />
+                        <label style={label}>ETHscriptions collection slug</label>
+                        <input style={input} type="text" placeholder="e.g. pixel-goblins"
+                            value={collectionSlug} onChange={e => setCollectionSlug(e.target.value)} />
+                        <p style={{ color: '#444', fontSize: '0.75rem', marginTop: '4px' }}>or</p>
                     </div>
+                    <div>
+                        <label style={label}>ERC-721 contract address</label>
+                        <input style={input} type="text" placeholder="0x..."
+                            value={contractAddress} onChange={e => setContractAddress(e.target.value)} />
+                    </div>
+                </div>
+            )}
+
+            {gateType === 'token' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                        <label style={label}>ERC-20 contract address</label>
+                        <input style={input} type="text" placeholder="0x..."
+                            value={contractAddress} onChange={e => setContractAddress(e.target.value)} />
+                    </div>
+                    <div>
+                        <label style={label}>Minimum balance required</label>
+                        <input style={input} type="number" min="0" step="any" placeholder="1"
+                            value={minBalance} onChange={e => setMinBalance(e.target.value)} />
+                        <p style={{ color: '#444', fontSize: '0.75rem', marginTop: '4px' }}>
+                            In whole tokens (e.g. 1 = 1 token)
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {gateType === 'allowlist' && (
+                <div>
+                    <label style={label}>Allowed wallet addresses</label>
+                    <textarea
+                        style={{
+                            ...input, height: '120px', resize: 'vertical' as const,
+                            fontFamily: 'monospace', fontSize: '0.78rem',
+                        }}
+                        placeholder={'0xabc...\n0xdef...\n0x123...'}
+                        value={allowlistAddresses}
+                        onChange={e => setAllowlistAddresses(e.target.value)}
+                    />
+                    <p style={{ color: '#444', fontSize: '0.75rem', marginTop: '4px' }}>
+                        One address per line
+                    </p>
                 </div>
             )}
 
@@ -830,7 +863,9 @@ function Step5({
                     claim_limit: parseInt(brandingConfig.claim_limit) || 50,
                 }
                 if (gateConfig.contract_address) body.contract_address = gateConfig.contract_address
-                if (gateConfig.collection_slug) body.collection_slug = gateConfig.collection_slug
+                if (gateConfig.collection_slug)  body.collection_slug  = gateConfig.collection_slug
+                if (gateConfig.min_balance)       body.min_balance       = gateConfig.min_balance
+                if (gateConfig.allowlist_addresses) body.allowlist_addresses = gateConfig.allowlist_addresses
 
                 const res = await fetch('/api/onboard/create', {
                     method: 'POST',

@@ -113,12 +113,14 @@ class OnboardController extends Controller
             'name'              => 'required|string|max:80',
             'ens_domain'        => 'required|string|ends_with:.eth',
             'namestone_api_key' => 'required|string',
-            'gate_type'         => 'required|in:open,nft,token,allowlist',
-            'contract_address'  => 'nullable|string',
-            'collection_slug'   => 'nullable|string',
-            'accent_color'      => 'nullable|string|max:7',
-            'logo_url'          => 'nullable|url',
-            'claim_limit'       => 'nullable|integer|min:1|max:10000', // ignored — always free at creation
+            'gate_type'           => 'required|in:open,nft,token,allowlist',
+            'contract_address'    => 'nullable|string',
+            'collection_slug'     => 'nullable|string',
+            'min_balance'         => 'nullable|numeric|min:0',
+            'allowlist_addresses' => 'nullable|string',
+            'accent_color'        => 'nullable|string|max:7',
+            'logo_url'            => 'nullable|url',
+            'claim_limit'         => 'nullable|integer|min:1|max:10000', // ignored — always free at creation
         ]);
 
         $ensDomain = strtolower($validated['ens_domain']);
@@ -157,10 +159,12 @@ class OnboardController extends Controller
         // Create gate config
         if ($validated['gate_type'] !== 'open') {
             $tenant->gateConfig()->create([
-                'type'             => $validated['gate_type'],
-                'contract_address' => $validated['contract_address'] ?? null,
-                'collection_slug'  => $validated['collection_slug'] ?? null,
-                'max_per_wallet'   => 1,
+                'type'                => $validated['gate_type'],
+                'contract_address'    => $validated['contract_address'] ?? null,
+                'collection_slug'     => $validated['collection_slug'] ?? null,
+                'min_balance'         => $validated['min_balance'] ?? null,
+                'allowlist_addresses' => $validated['allowlist_addresses'] ?? null,
+                'max_per_wallet'      => 1,
             ]);
         }
 

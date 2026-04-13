@@ -24,6 +24,7 @@ interface Tenant {
     claims_count: number
     at_limit: boolean
     gate_type: string
+    plan: string
 }
 
 const queryClient = new QueryClient()
@@ -330,7 +331,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             </button>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#3a3a3a' }}>
-                <span>No gas required · Powered by ENSub</span>
+                <span>No gas required{tenant.plan === 'free' ? ' · Powered by ENSub' : ''}</span>
                 <span>{tenant.claims_count}/{tenant.claim_limit} claimed</span>
             </div>
         </div>
@@ -391,10 +392,12 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
 
                                 <ShareBar tenant={tenant} />
 
-                                <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
-                                    Powered by{' '}
-                                    <a href="/" style={{ color: '#3a3a3a', textDecoration: 'underline' }}>ENSub</a>
-                                </p>
+                                {tenant.plan === 'free' && (
+                                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
+                                        Powered by{' '}
+                                        <a href="/" style={{ color: '#3a3a3a', textDecoration: 'underline' }}>ENSub</a>
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </main>

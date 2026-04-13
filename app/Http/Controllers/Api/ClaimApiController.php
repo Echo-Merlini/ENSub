@@ -174,9 +174,8 @@ class ClaimApiController extends Controller
         }
 
         if ($gate->type === 'nft') {
-            // ERC-721 ownership via simple eth_call could go here
-            // For now support ETHscriptions collections
             if ($gate->collection_slug) {
+                // ETHscriptions collection check
                 $res = Http::get(self::ETHSCRIPTIONS_API, [
                     'owner'           => $address,
                     'collection_slug' => $gate->collection_slug,
@@ -187,35 +186,68 @@ class ClaimApiController extends Controller
                     return 'No qualifying NFTs found in this wallet';
                 }
             } elseif ($gate->contract_address) {
-                // ERC-721 balanceOf check via Alchemy/public RPC
-                $owned = $this->checkErc721Balance($address, $gate->contract_address);
-                if (! $owned) {
+                // ERC-721 balanceOf check
+                if (! $this->checkErc721Balance($address, $gate->contract_address)) {
                     return 'No qualifying NFTs found in this wallet';
                 }
             }
+            return null;
+        }
+
+        if ($gate->type === 'token') {
+            if (! $gate->contract_address) {
+                return 'Token gate is misconfigured — no contract address set';
+            }
+            $minBalance = $gate->min_balance ?? 1;
+            $balance = $this->checkErc20Balance($address, $gate->contract_address);
+            if ($balance < (float) $minBalance) {
+                return 'Insufficient token balance to claim';
+            }
+            return null;
         }
 
         if ($gate->type === 'allowlist') {
-            // Could be extended — for now just pass
+            if (! $gate->allowlist_addresses) {
+                return 'Allowlist gate is misconfigured — no addresses set';
+            }
+            $list = array_map(
+                fn($a) => strtolower(trim($a)),
+                preg_split('/[\r\n,]+/', $gate->allowlist_addresses)
+            );
+            if (! in_array(strtolower($address), array_filter($list))) {
+                return 'Your wallet is not on the allowlist';
+            }
             return null;
         }
 
         return null;
     }
 
-    private function checkErc721Balance(string $address, string $contract): bool
+    private function ethCall(string $contract, string $data): string
     {
-        // balanceOf(address) = 0x70a08231 + padded address
-        $data = '0x70a08231' . str_pad(substr($address, 2), 64, '0', STR_PAD_LEFT);
-
         $res = Http::post('https://eth-mainnet.g.alchemy.com/v2/' . config('services.alchemy.key'), [
             'jsonrpc' => '2.0',
             'method'  => 'eth_call',
             'params'  => [['to' => $contract, 'data' => $data], 'latest'],
             'id'      => 1,
         ]);
+        return $res->json()['result'] ?? '0x0';
+    }
 
-        $hex = $res->json()['result'] ?? '0x0';
-        return hexdec($hex) > 0;
+    private function checkErc721Balance(string $address, string $contract): bool
+    {
+        // balanceOf(address) → 0x70a08231
+        $data = '0x70a08231' . str_pad(substr($address, 2), 64, '0', STR_PAD_LEFT);
+        return hexdec($this->ethCall($contract, $data)) > 0;
+    }
+
+    private function checkErc20Balance(string $address, string $contract): float
+    {
+        // balanceOf(address) → 0x70a08231 (same selector as ERC-721)
+        $data = '0x70a08231' . str_pad(substr($address, 2), 64, '0', STR_PAD_LEFT);
+        $hex  = $this->ethCall($contract, $data);
+        // ERC-20 balances are uint256; use bcmath to avoid overflow
+        $raw  = ltrim($hex, '0x') ?: '0';
+        return (float) bcdiv(base_convert($raw, 16, 10), bcpow('10', '18'), 6);
     }
 }

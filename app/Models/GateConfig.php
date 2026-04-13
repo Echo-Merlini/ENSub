@@ -9,7 +9,7 @@ class GateConfig extends Model
 {
     protected $fillable = [
         'tenant_id', 'type', 'chain', 'contract_address',
-        'collection_slug', 'min_balance', 'max_per_wallet',
+        'collection_slug', 'min_balance', 'max_per_wallet', 'allowlist_addresses',
     ];
 
     protected $casts = [

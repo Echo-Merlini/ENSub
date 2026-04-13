@@ -27,6 +27,8 @@ interface TenantData {
     gate_type: string
     contract_address: string | null
     collection_slug: string | null
+    min_balance: string | null
+    allowlist_addresses: string | null
     namestone_api_key: string
     claims: ClaimEntry[]
 }
@@ -92,6 +94,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         gate_type: tenant.gate_type,
         contract_address: tenant.contract_address ?? '',
         collection_slug: tenant.collection_slug ?? '',
+        min_balance: tenant.min_balance ?? '1',
+        allowlist_addresses: tenant.allowlist_addresses ?? '',
         claim_limit: tenant.claim_limit,
     })
     const [saving, setSaving] = useState(false)
@@ -270,21 +274,52 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         value={form.gate_type} onChange={e => set('gate_type', e.target.value)}>
                                         <option value="open">Open — anyone can claim</option>
                                         <option value="nft">NFT holders only</option>
+                                        <option value="token">Token holders (ERC-20)</option>
                                         <option value="allowlist">Allowlist</option>
                                     </select>
                                 </div>
+
                                 {form.gate_type === 'nft' && (
                                     <>
                                         <div>
-                                            <label style={labelStyle}>Contract address</label>
-                                            <input style={inputStyle} value={form.contract_address} onChange={e => set('contract_address', e.target.value)} placeholder="0x..." />
+                                            <label style={labelStyle}>ETHscriptions collection slug</label>
+                                            <input style={inputStyle} value={form.collection_slug} onChange={e => set('collection_slug', e.target.value)} placeholder="e.g. pixel-goblins" />
                                         </div>
                                         <div>
-                                            <label style={labelStyle}>Collection slug (OpenSea/ETHscriptions)</label>
-                                            <input style={inputStyle} value={form.collection_slug} onChange={e => set('collection_slug', e.target.value)} placeholder="my-collection" />
+                                            <label style={labelStyle}>ERC-721 contract address</label>
+                                            <input style={inputStyle} value={form.contract_address} onChange={e => set('contract_address', e.target.value)} placeholder="0x..." />
                                         </div>
                                     </>
                                 )}
+
+                                {form.gate_type === 'token' && (
+                                    <>
+                                        <div>
+                                            <label style={labelStyle}>ERC-20 contract address</label>
+                                            <input style={inputStyle} value={form.contract_address} onChange={e => set('contract_address', e.target.value)} placeholder="0x..." />
+                                        </div>
+                                        <div>
+                                            <label style={labelStyle}>Minimum balance required</label>
+                                            <input style={inputStyle} type="number" min={0} step="any"
+                                                value={form.min_balance} onChange={e => set('min_balance', e.target.value)} placeholder="1" />
+                                            <p style={{ color: COLORS.dim, fontSize: '0.72rem', marginTop: '4px' }}>In whole tokens (e.g. 1 = 1 token)</p>
+                                        </div>
+                                    </>
+                                )}
+
+                                {form.gate_type === 'allowlist' && (
+                                    <div>
+                                        <label style={labelStyle}>Allowed wallet addresses</label>
+                                        <textarea
+                                            style={{ ...inputStyle, height: '120px', resize: 'vertical' as const, fontFamily: 'monospace', fontSize: '0.78rem' }}
+                                            value={form.allowlist_addresses}
+                                            onChange={e => set('allowlist_addresses', e.target.value)}
+                                            placeholder={'0xabc...\n0xdef...\n0x123...'}
+                                        />
+                                        <p style={{ color: COLORS.dim, fontSize: '0.72rem', marginTop: '4px' }}>One address per line</p>
+                                    </div>
+                                )}
+
                                 <div>
                                     <label style={labelStyle}>Claim limit</label>
                                     <input style={inputStyle} type="number" min={1} max={50000}
