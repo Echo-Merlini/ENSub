@@ -450,6 +450,7 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    address:      address,
                     domain:       ensDomain,
                     signature,
                     email:        email.trim(),

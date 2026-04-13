@@ -204,13 +204,8 @@ class OnboardController extends Controller
     // POST /api/onboard/namestone-enable
     public function namestoneEnable(Request $request): JsonResponse
     {
-        $address = $request->session()->get('verified_address');
-
-        if (! $address) {
-            return response()->json(['error' => 'Not authenticated'], 401);
-        }
-
         $validated = $request->validate([
+            'address'      => 'required|string|regex:/^0x[0-9a-fA-F]{40}$/',
             'domain'       => 'required|string',
             'signature'    => 'required|string',
             'email'        => 'required|email|max:255',
@@ -219,7 +214,7 @@ class OnboardController extends Controller
 
         $res = Http::post('https://namestone.com/api/public_v1/enable-domain', [
             'domain'       => strtolower($validated['domain']),
-            'address'      => $address,
+            'address'      => strtolower($validated['address']),
             'signature'    => $validated['signature'],
             'email'        => $validated['email'],
             'company_name' => $validated['company_name'],
