@@ -38,9 +38,18 @@ class BillingController extends Controller
         $checkoutParams = [
             'success_url' => $validated['success_url'],
             'cancel_url'  => $validated['cancel_url'],
+            // metadata on the session itself (for reference)
             'metadata' => [
                 'tenant_slug' => $tenant->slug,
                 'plan' => $validated['plan'],
+            ],
+            // subscription_data.metadata is what gets copied onto the subscription
+            // object — this is what the webhook listener reads
+            'subscription_data' => [
+                'metadata' => [
+                    'tenant_slug' => $tenant->slug,
+                    'plan' => $validated['plan'],
+                ],
             ],
         ];
 
