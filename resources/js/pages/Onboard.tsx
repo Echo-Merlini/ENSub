@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { WagmiProvider, useAccount, useSignMessage, createConfig, http } from 'wagmi'
+import { WagmiProvider, useAccount, useSignMessage, useReadContract, useWriteContract, useWaitForTransactionReceipt, createConfig, http } from 'wagmi'
+import { namehash } from 'viem/ens'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
 import {
@@ -411,6 +412,134 @@ function Step3({ onDone }: { onDone: (config: GateConfig) => void }) {
     )
 }
 
+// ─── Step 3b: Set ENS resolver ────────────────────────────────────────────
+
+const ENS_REGISTRY    = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e' as const
+const NAME_WRAPPER    = '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401' as const
+const NS_RESOLVER     = '0xA87361C4E58B619c390f469B9E6F27d759715125' as const
+
+const REGISTRY_ABI = [
+    { name: 'resolver', type: 'function', inputs: [{ name: 'node', type: 'bytes32' }], outputs: [{ type: 'address' }], stateMutability: 'view' },
+    { name: 'owner',    type: 'function', inputs: [{ name: 'node', type: 'bytes32' }], outputs: [{ type: 'address' }], stateMutability: 'view' },
+    { name: 'setResolver', type: 'function', inputs: [{ name: 'node', type: 'bytes32' }, { name: 'resolver', type: 'address' }], outputs: [], stateMutability: 'nonpayable' },
+] as const
+
+function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => void }) {
+    const node = namehash(ensDomain)
+    const { writeContractAsync } = useWriteContract()
+    const [txHash, setTxHash]   = useState<`0x${string}` | undefined>()
+    const [setting, setSetting] = useState(false)
+    const [error, setError]     = useState('')
+
+    const { data: currentResolver, isLoading: resolverLoading } = useReadContract({
+        address: ENS_REGISTRY, abi: REGISTRY_ABI, functionName: 'resolver', args: [node],
+    })
+    const { data: registryOwner } = useReadContract({
+        address: ENS_REGISTRY, abi: REGISTRY_ABI, functionName: 'owner', args: [node],
+    })
+    const { isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: txHash })
+
+    const alreadySet = currentResolver?.toLowerCase() === NS_RESOLVER.toLowerCase()
+    const isWrapped  = registryOwner?.toLowerCase() === NAME_WRAPPER.toLowerCase()
+
+    // Auto-advance if resolver already correct
+    useEffect(() => {
+        if (!resolverLoading && alreadySet) onDone()
+    }, [resolverLoading, alreadySet])
+
+    // Advance once tx confirmed
+    useEffect(() => {
+        if (confirmed) onDone()
+    }, [confirmed])
+
+    const handleSet = async () => {
+        setSetting(true)
+        setError('')
+        try {
+            const target = isWrapped ? NAME_WRAPPER : ENS_REGISTRY
+            const hash = await writeContractAsync({
+                address: target,
+                abi: REGISTRY_ABI,
+                functionName: 'setResolver',
+                args: [node, NS_RESOLVER],
+            })
+            setTxHash(hash)
+        } catch (e: any) {
+            setError(e.shortMessage || e.message || 'Transaction failed')
+            setSetting(false)
+        }
+    }
+
+    if (resolverLoading) {
+        return (
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <p style={{ color: '#888', fontSize: '0.875rem' }}>⟳ Checking resolver…</p>
+            </div>
+        )
+    }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ textAlign: 'center' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                    Set resolver
+                </h2>
+                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                    One-time transaction to point <span style={{ color: ACCENT }}>{ensDomain}</span> at Namestone's resolver
+                </p>
+            </div>
+
+            <div style={{
+                background: 'rgba(255,170,0,0.05)', border: '1px solid rgba(255,170,0,0.2)',
+                borderRadius: '10px', padding: '14px 18px', fontSize: '0.82rem', color: '#ffaa00',
+            }}>
+                ⚠ This is an on-chain transaction — requires a small amount of ETH for gas (~$2–5)
+            </div>
+
+            <div style={{
+                background: 'rgba(10,10,30,0.4)', border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '10px', padding: '14px 18px', fontSize: '0.8rem',
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ color: '#555' }}>Current resolver</span>
+                    <span style={{ color: '#888', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                        {currentResolver ? `${currentResolver.slice(0, 6)}…${currentResolver.slice(-4)}` : 'none'}
+                    </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#555' }}>New resolver</span>
+                    <span style={{ color: ACCENT, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                        {NS_RESOLVER.slice(0, 6)}…{NS_RESOLVER.slice(-4)} (Namestone)
+                    </span>
+                </div>
+            </div>
+
+            {txHash && !confirmed && (
+                <div style={{
+                    background: 'rgba(0,255,136,0.05)', border: `1px solid ${ACCENT}33`,
+                    borderRadius: '8px', padding: '12px 16px', fontSize: '0.82rem', color: '#888',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                }}>
+                    <span>⟳</span>
+                    <span>Waiting for confirmation…</span>
+                    <a href={`https://etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+                        style={{ marginLeft: 'auto', color: ACCENT, fontSize: '0.75rem', textDecoration: 'underline' }}>
+                        View on Etherscan →
+                    </a>
+                </div>
+            )}
+
+            {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
+
+            {!txHash && (
+                <button style={btnPrimary(setting)} onClick={handleSet} disabled={setting}>
+                    {setting ? '⟳ WAITING FOR SIGNATURE…' : 'SET RESOLVER'}
+                </button>
+            )}
+        </div>
+    )
+}
+
 // ─── Step 4: Branding + Namestone key ─────────────────────────────────────
 
 interface BrandingConfig {
@@ -793,7 +922,7 @@ function OnboardWizard() {
     const [gateConfig, setGateConfig] = useState<GateConfig | null>(null)
     const [brandingConfig, setBrandingConfig] = useState<BrandingConfig | null>(null)
 
-    const totalSteps = 4 // steps 0–3 before success (step 4)
+    const totalSteps = 5 // steps 0–4 before success (step 5)
 
     const reset = () => {
         setStep(0)
@@ -802,7 +931,7 @@ function OnboardWizard() {
         setBrandingConfig(null)
     }
 
-    const stepTitles = ['Verify Wallet', 'ENS Domain', 'Eligibility', 'Branding']
+    const stepTitles = ['Verify Wallet', 'ENS Domain', 'Eligibility', 'Resolver', 'Branding']
 
     return (
         <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -827,7 +956,7 @@ function OnboardWizard() {
                         ENSub
                     </span>
                 </a>
-                {step < 4 && (
+                {step < 5 && (
                     <span style={{ fontSize: '0.8rem', color: '#444' }}>
                         Step {step + 1} of {totalSteps} — {stepTitles[step]}
                     </span>
@@ -844,7 +973,7 @@ function OnboardWizard() {
             }}>
                 <div style={{ width: '100%', maxWidth: '480px' }}>
                     <div style={card}>
-                        {step < 4 && <StepBar current={step} total={totalSteps} />}
+                        {step < 5 && <StepBar current={step} total={totalSteps} />}
 
                         {step === 0 && (
                             <Step1 onDone={() => setStep(1)} />
@@ -856,12 +985,15 @@ function OnboardWizard() {
                             <Step3 onDone={(g) => { setGateConfig(g); setStep(3) }} />
                         )}
                         {step === 3 && (
+                            <StepResolver ensDomain={ensDomain} onDone={() => setStep(4)} />
+                        )}
+                        {step === 4 && (
                             <Step4
                                 ensDomain={ensDomain}
-                                onDone={(b) => { setBrandingConfig(b); setStep(4) }}
+                                onDone={(b) => { setBrandingConfig(b); setStep(5) }}
                             />
                         )}
-                        {step === 4 && gateConfig && brandingConfig && (
+                        {step === 5 && gateConfig && brandingConfig && (
                             <Step5
                                 ensDomain={ensDomain}
                                 gateConfig={gateConfig}
@@ -871,7 +1003,7 @@ function OnboardWizard() {
                         )}
                     </div>
 
-                    {step > 0 && step < 4 && (
+                    {step > 0 && step < 5 && (
                         <button
                             onClick={() => setStep(s => s - 1)}
                             style={{
