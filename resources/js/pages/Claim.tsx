@@ -77,6 +77,52 @@ function OwnerControls({ tenant }: { tenant: Tenant }) {
     )
 }
 
+function ShareBar({ tenant }: { tenant: Tenant }) {
+    const [copied, setCopied] = useState(false)
+    const claimUrl = `${window.location.origin}/claim/${tenant.slug}`
+    const shareText = `Claim your free ${tenant.ens_domain} subdomain on ENSub 🌐`
+
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(claimUrl)}`
+    const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText + '\n' + claimUrl)}`
+
+    const copyLink = () => {
+        navigator.clipboard.writeText(claimUrl).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    }
+
+    const btnStyle = {
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '7px 13px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 'bold',
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+        color: '#888', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
+    } as const
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.73rem', color: '#3a3a3a', marginRight: '2px' }}>Share</span>
+            <a href={twitterUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, color: '#1d9bf0' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.258 5.632 5.907-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                Share
+            </a>
+            <a href={farcasterUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, color: '#8b5cf6' }}>
+                <svg width="14" height="14" viewBox="0 0 1000 1000" fill="currentColor">
+                    <path d="M257.778 155.556H742.222V844.445H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.445H257.778V155.556Z"/>
+                    <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.445H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z"/>
+                    <path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.445H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z"/>
+                </svg>
+                Farcaster
+            </a>
+            <button onClick={copyLink} style={{ ...btnStyle, color: copied ? '#00ff88' : '#888' }}>
+                {copied ? '✓ Copied' : '🔗 Copy link'}
+            </button>
+        </div>
+    )
+}
+
 type Status = 'idle' | 'checking' | 'available' | 'taken' | 'claiming' | 'claimed' | 'error' | 'already-claimed' | 'not-eligible'
 
 function ClaimForm({ tenant }: { tenant: Tenant }) {
@@ -342,6 +388,8 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                 </div>
 
                                 <ClaimForm tenant={tenant} />
+
+                                <ShareBar tenant={tenant} />
 
                                 <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
                                     Powered by{' '}

@@ -99,6 +99,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [error, setError] = useState('')
     const [claims, setClaims] = useState<ClaimEntry[]>(tenant.claims)
     const [revoking, setRevoking] = useState<number | null>(null)
+    const [linkCopied, setLinkCopied] = useState(false)
+    const [embedCopied, setEmbedCopied] = useState(false)
 
     const isOwner = isConnected && address?.toLowerCase() === tenant.owner_address.toLowerCase()
 
@@ -378,6 +380,100 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                 </div>
                             )}
                         </div>
+
+                        {/* Share */}
+                        {(() => {
+                            const claimUrl = `${window.location.origin}/claim/${tenant.slug}`
+                            const shareText = `Claim your free ${tenant.ens_domain} subdomain on ENSub 🌐`
+                            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(claimUrl)}`
+                            const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText + '\n' + claimUrl)}`
+                            const btnStyle = {
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
+                                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#888', textDecoration: 'none', cursor: 'pointer',
+                            } as const
+                            return (
+                                <div style={card}>
+                                    <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '6px' }}>Share claim page</h2>
+                                    <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '14px', fontFamily: 'monospace' }}>{claimUrl}</p>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <a href={twitterUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, color: '#1d9bf0' }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.258 5.632 5.907-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                            </svg>
+                                            Share on X
+                                        </a>
+                                        <a href={farcasterUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, color: '#8b5cf6' }}>
+                                            <svg width="14" height="14" viewBox="0 0 1000 1000" fill="currentColor">
+                                                <path d="M257.778 155.556H742.222V844.445H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.445H257.778V155.556Z"/>
+                                                <path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.445H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z"/>
+                                                <path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.445H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z"/>
+                                            </svg>
+                                            Farcaster
+                                        </a>
+                                        <button
+                                            onClick={() => { navigator.clipboard.writeText(claimUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}
+                                            style={{ ...btnStyle, color: linkCopied ? '#00ff88' : '#888' }}>
+                                            {linkCopied ? '✓ Copied' : '🔗 Copy link'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )
+                        })()}
+
+                        {/* Embed */}
+                        {tenant.plan === 'free' ? (
+                            <div style={{ ...card, borderColor: `${accent}22` }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                                    <div>
+                                        <p style={{ color: COLORS.text, fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                            {'</>'} Embed claim box
+                                        </p>
+                                        <p style={{ color: COLORS.muted, fontSize: '0.8rem', marginTop: '2px' }}>
+                                            Add the claim widget to your own site — Pro &amp; Business only
+                                        </p>
+                                    </div>
+                                    <a href={`/pricing?slug=${tenant.slug}`}
+                                        style={{
+                                            padding: '8px 18px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold',
+                                            background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                                            color: '#0a0a1a', textDecoration: 'none', flexShrink: 0,
+                                        }}>
+                                        Upgrade →
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={card}>
+                                <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '6px' }}>{'</>'} Embed claim box</h2>
+                                <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '12px' }}>
+                                    Drop this snippet anywhere on your site to embed the claim widget.
+                                </p>
+                                <pre style={{
+                                    background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: '8px', padding: '14px', fontSize: '0.72rem',
+                                    color: '#aaa', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                                    fontFamily: "'Fira Code', 'Courier New', monospace", margin: 0,
+                                }}>{`<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="480"\n  height="560"\n  frameborder="0"\n  style="border-radius:12px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`}</pre>
+                                <button
+                                    onClick={() => {
+                                        const snippet = `<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="480"\n  height="560"\n  frameborder="0"\n  style="border-radius:12px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`
+                                        navigator.clipboard.writeText(snippet)
+                                        setEmbedCopied(true)
+                                        setTimeout(() => setEmbedCopied(false), 2000)
+                                    }}
+                                    style={{
+                                        marginTop: '10px', padding: '8px 16px', borderRadius: '8px',
+                                        fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer',
+                                        background: embedCopied ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.05)',
+                                        border: `1px solid ${embedCopied ? '#00ff8844' : 'rgba(255,255,255,0.08)'}`,
+                                        color: embedCopied ? '#00ff88' : '#888',
+                                    }}>
+                                    {embedCopied ? '✓ Copied!' : 'Copy snippet'}
+                                </button>
+                            </div>
+                        )}
 
                         {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
 
