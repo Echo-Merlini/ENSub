@@ -694,6 +694,25 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                         <label style={label}>Paste API key here when you receive it</label>
                         <input style={input} type="text" placeholder="ns_…" value={apiKey} onChange={e => setApiKey(e.target.value)} />
                     </div>
+
+                    {apiKey && (
+                        <div style={{
+                            display: 'flex', alignItems: 'flex-start', gap: '8px',
+                            background: 'rgba(255,170,0,0.05)',
+                            border: '1px solid rgba(255,170,0,0.2)',
+                            borderRadius: '8px',
+                            padding: '10px 12px',
+                            fontSize: '0.78rem',
+                            color: '#ffaa00',
+                        }}>
+                            <span style={{ flexShrink: 0 }}>🔑</span>
+                            <span>
+                                Keep this key private — it controls subdomain issuance on your ENS domain.
+                                Store a copy somewhere safe; it won't be shown again.
+                            </span>
+                        </div>
+                    )}
+                </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '14px' }}>
