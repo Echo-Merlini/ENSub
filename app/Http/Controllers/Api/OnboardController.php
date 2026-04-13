@@ -191,8 +191,7 @@ class OnboardController extends Controller
             return response()->json(['error' => 'Failed to get message from Namestone'], 502);
         }
 
-        $body = $res->json();
-        $message = $body['message'] ?? $body['siwe_message'] ?? null;
+        $message = trim($res->body());
 
         if (! $message) {
             return response()->json(['error' => 'Unexpected Namestone response'], 502);
