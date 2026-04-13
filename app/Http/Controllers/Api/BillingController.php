@@ -35,18 +35,26 @@ class BillingController extends Controller
             'business' => config('services.stripe.price_business'),
         };
 
+        $checkoutParams = [
+            'success_url' => $validated['success_url'],
+            'cancel_url'  => $validated['cancel_url'],
+            'metadata' => [
+                'tenant_slug' => $tenant->slug,
+                'plan' => $validated['plan'],
+            ],
+        ];
+
+        // Only pass customer_email when there is no existing Stripe customer.
+        // If stripe_id is set, Cashier already passes `customer` and Stripe
+        // rejects having both `customer` and `customer_email` in the same call.
+        if (! $tenant->stripe_id) {
+            $checkoutParams['customer_email'] = $validated['email'];
+        }
+
         $checkout = $tenant
             ->newSubscription('default', $priceId)
             ->allowPromotionCodes()
-            ->checkout([
-                'success_url' => $validated['success_url'],
-                'cancel_url'  => $validated['cancel_url'],
-                'customer_email' => $validated['email'],
-                'metadata' => [
-                    'tenant_slug' => $tenant->slug,
-                    'plan' => $validated['plan'],
-                ],
-            ]);
+            ->checkout($checkoutParams);
 
         return response()->json(['url' => $checkout->url]);
     }
