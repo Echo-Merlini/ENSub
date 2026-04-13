@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80"
+    volumes:
+      - /volume1/docker/ECHO/data/ensub/database:/var/www/html/database
+    restart: unless-stopped
