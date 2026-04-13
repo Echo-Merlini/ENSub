@@ -790,15 +790,45 @@ function Step5({
     gateConfig,
     brandingConfig,
     onReset,
+    plan,
 }: {
     ensDomain: string
     gateConfig: GateConfig
     brandingConfig: BrandingConfig
     onReset: () => void
+    plan?: 'pro' | 'business'
 }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [result, setResult] = useState<{ slug: string; claim_url: string } | null>(null)
+    const [billingEmail, setBillingEmail] = useState('')
+    const [billingLoading, setBillingLoading] = useState(false)
+    const [billingError, setBillingError] = useState('')
+
+    const handleBillingRedirect = async () => {
+        if (!result || !billingEmail.trim()) return
+        setBillingLoading(true)
+        setBillingError('')
+        try {
+            const res = await fetch('/api/billing/upgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    slug: result.slug,
+                    plan: plan,
+                    email: billingEmail.trim(),
+                    success_url: `${window.location.origin}/manage/${result.slug}?upgraded=1`,
+                    cancel_url: `${window.location.origin}/manage/${result.slug}`,
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Failed to start checkout')
+            window.location.href = data.url
+        } catch (e: any) {
+            setBillingError(e.message)
+            setBillingLoading(false)
+        }
+    }
 
     useEffect(() => {
         const create = async () => {
@@ -848,6 +878,61 @@ function Step5({
                 <p style={{ color: '#ff4444', fontWeight: 'bold' }}>Something went wrong</p>
                 <p style={{ color: '#888', fontSize: '0.875rem' }}>{error}</p>
                 <button style={btnPrimary()} onClick={onReset}>START OVER</button>
+            </div>
+        )
+    }
+
+    // Paid plan flow — ask for billing email then redirect to Stripe
+    if (plan && result) {
+        const planLabel = plan === 'pro' ? 'Pro ($9/mo)' : 'Business ($29/mo)'
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
+                <div>
+                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                        Page created!
+                    </h2>
+                    <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                        One last step — set up your <span style={{ color: ACCENT }}>{planLabel}</span> subscription
+                    </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#888' }}>Billing email</label>
+                    <input
+                        style={{
+                            width: '100%', background: 'rgba(10,10,30,0.5)',
+                            border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '8px',
+                            padding: '11px 14px', color: '#e4e4e4',
+                            fontFamily: "'Inter', system-ui, sans-serif", fontSize: '0.9rem',
+                            outline: 'none', boxSizing: 'border-box' as const,
+                        }}
+                        type="email"
+                        placeholder="you@example.com"
+                        value={billingEmail}
+                        onChange={e => setBillingEmail(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleBillingRedirect()}
+                        autoFocus
+                    />
+                    {billingError && <p style={{ color: '#ff4444', fontSize: '0.8rem' }}>{billingError}</p>}
+                    <button
+                        onClick={handleBillingRedirect}
+                        disabled={!billingEmail.trim() || billingLoading}
+                        style={{
+                            ...btnPrimary(!billingEmail.trim() || billingLoading),
+                            width: '100%',
+                        }}
+                    >
+                        {billingLoading ? '⟳ Redirecting…' : `CONTINUE TO PAYMENT →`}
+                    </button>
+                </div>
+
+                <a
+                    href={`/manage/${result.slug}`}
+                    style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'underline' }}
+                >
+                    Skip for now — activate later from manage page
+                </a>
             </div>
         )
     }
@@ -941,6 +1026,9 @@ function OnboardWizard() {
     const [gateConfig, setGateConfig] = useState<GateConfig | null>(null)
     const [brandingConfig, setBrandingConfig] = useState<BrandingConfig | null>(null)
 
+    const urlPlan = new URLSearchParams(window.location.search).get('plan') as 'pro' | 'business' | null
+    const plan = urlPlan === 'pro' || urlPlan === 'business' ? urlPlan : undefined
+
     const totalSteps = 5 // steps 0–4 before success (step 5)
 
     const reset = () => {
@@ -1018,6 +1106,7 @@ function OnboardWizard() {
                                 gateConfig={gateConfig}
                                 brandingConfig={brandingConfig}
                                 onReset={reset}
+                                plan={plan}
                             />
                         )}
                     </div>
