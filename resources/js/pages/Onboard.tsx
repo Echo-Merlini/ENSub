@@ -713,7 +713,6 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                         </div>
                     )}
                 </div>
-                </div>
 
                 <div style={{ display: 'flex', gap: '14px' }}>
                     <div style={{ flex: 1 }}>
