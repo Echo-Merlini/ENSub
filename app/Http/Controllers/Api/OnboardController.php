@@ -8,6 +8,7 @@ use App\Services\EnsService;
 use App\Services\SiweService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class OnboardController extends Controller
@@ -170,5 +171,67 @@ class OnboardController extends Controller
             'slug'      => $slug,
             'claim_url' => url("/claim/{$slug}"),
         ]);
+    }
+
+    // Namestone wallet-enable: Step 1 — fetch SIWE message
+    // GET /api/onboard/namestone-message?address=0x...
+    public function namestoneMessage(Request $request): JsonResponse
+    {
+        $address = strtolower(trim($request->query('address', '')));
+
+        if (! preg_match('/^0x[0-9a-f]{40}$/i', $address)) {
+            return response()->json(['error' => 'Invalid address'], 400);
+        }
+
+        $res = Http::get('https://namestone.com/api/public_v1/get-siwe-message', [
+            'address' => $address,
+        ]);
+
+        if (! $res->successful()) {
+            return response()->json(['error' => 'Failed to get message from Namestone'], 502);
+        }
+
+        $body = $res->json();
+        $message = $body['message'] ?? $body['siwe_message'] ?? null;
+
+        if (! $message) {
+            return response()->json(['error' => 'Unexpected Namestone response'], 502);
+        }
+
+        return response()->json(['message' => $message]);
+    }
+
+    // Namestone wallet-enable: Step 2 — submit signature → Namestone emails the API key
+    // POST /api/onboard/namestone-enable
+    public function namestoneEnable(Request $request): JsonResponse
+    {
+        $address = $request->session()->get('verified_address');
+
+        if (! $address) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $validated = $request->validate([
+            'domain'       => 'required|string',
+            'signature'    => 'required|string',
+            'email'        => 'required|email|max:255',
+            'company_name' => 'required|string|max:80',
+        ]);
+
+        $res = Http::post('https://namestone.com/api/public_v1/enable-domain', [
+            'domain'       => strtolower($validated['domain']),
+            'address'      => $address,
+            'signature'    => $validated['signature'],
+            'email'        => $validated['email'],
+            'company_name' => $validated['company_name'],
+        ]);
+
+        if (! $res->successful()) {
+            $body  = $res->json();
+            $error = $body['message'] ?? $body['error'] ?? 'Namestone enable failed';
+            return response()->json(['error' => $error], 502);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

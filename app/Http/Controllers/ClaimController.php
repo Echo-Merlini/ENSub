@@ -96,7 +96,7 @@ class ClaimController extends Controller
 
         // Remove from Namestone
         Http::withHeaders(['Authorization' => $tenant->namestone_api_key])
-            ->post('https://namestone.com/api/public_v1/revoke-name', [
+            ->delete('https://namestone.com/api/public_v1/delete-name', [
                 'domain' => $tenant->ens_domain,
                 'name'   => $claim->subdomain,
             ]);

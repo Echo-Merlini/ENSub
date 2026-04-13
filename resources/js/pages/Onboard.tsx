@@ -422,12 +422,48 @@ interface BrandingConfig {
 }
 
 function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: BrandingConfig) => void }) {
+    const { address } = useAccount()
+    const { signMessageAsync } = useSignMessage()
     const [name, setName] = useState('')
     const [apiKey, setApiKey] = useState('')
     const [accentColor, setAccentColor] = useState('#00ff88')
     const [logoUrl, setLogoUrl] = useState('')
     const [claimLimit, setClaimLimit] = useState('50')
     const [error, setError] = useState('')
+
+    const [email, setEmail] = useState('')
+    const [enableStatus, setEnableStatus] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
+    const [enableError, setEnableError] = useState('')
+
+    const handleNamestoneEnable = async () => {
+        if (!address || !email.trim()) return
+        setEnableStatus('busy')
+        setEnableError('')
+        try {
+            const msgRes = await fetch(`/api/onboard/namestone-message?address=${address}`)
+            const msgData = await msgRes.json()
+            if (!msgRes.ok) throw new Error(msgData.error || 'Could not get SIWE message')
+
+            const signature = await signMessageAsync({ message: msgData.message })
+
+            const res = await fetch('/api/onboard/namestone-enable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    domain:       ensDomain,
+                    signature,
+                    email:        email.trim(),
+                    company_name: name.trim() || ensDomain,
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Enable failed')
+            setEnableStatus('done')
+        } catch (e: any) {
+            setEnableError(e.message || 'Something went wrong')
+            setEnableStatus('error')
+        }
+    }
 
     const handleNext = () => {
         if (!name.trim()) { setError('Name is required'); return }
@@ -457,13 +493,76 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                     <input style={{ ...input, color: '#555', cursor: 'default' }} type="text" value={ensDomain} readOnly />
                 </div>
 
-                <div>
-                    <label style={label}>
-                        Namestone API Key{' '}
-                        <a href="https://namestone.xyz" target="_blank" rel="noopener noreferrer"
-                            style={{ color: ACCENT, fontSize: '0.75rem' }}>get one →</a>
-                    </label>
-                    <input style={input} type="text" placeholder="ns_…" value={apiKey} onChange={e => setApiKey(e.target.value)} />
+                {/* Namestone wallet-enable section */}
+                <div style={{
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: '10px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    background: 'rgba(10,10,30,0.3)',
+                }}>
+                    <div>
+                        <p style={{ color: '#ccc', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '2px' }}>
+                            Namestone API Key
+                        </p>
+                        <p style={{ color: '#555', fontSize: '0.78rem' }}>
+                            Enable your domain with your wallet — Namestone will email you the key
+                        </p>
+                    </div>
+
+                    {enableStatus !== 'done' && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                style={{ ...input, flex: 1 }}
+                                type="email"
+                                placeholder="your@email.com"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                            <button
+                                onClick={handleNamestoneEnable}
+                                disabled={!email.trim() || enableStatus === 'busy'}
+                                style={{
+                                    flexShrink: 0,
+                                    padding: '0 16px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${ACCENT}55`,
+                                    background: 'transparent',
+                                    color: !email.trim() || enableStatus === 'busy' ? '#444' : ACCENT,
+                                    fontWeight: 'bold',
+                                    fontSize: '0.8rem',
+                                    cursor: !email.trim() || enableStatus === 'busy' ? 'not-allowed' : 'pointer',
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {enableStatus === 'busy' ? '⟳ Signing…' : '⚡ Enable via wallet'}
+                            </button>
+                        </div>
+                    )}
+
+                    {enableStatus === 'done' && (
+                        <div style={{
+                            background: 'rgba(0,255,136,0.06)',
+                            border: `1px solid ${ACCENT}33`,
+                            borderRadius: '8px',
+                            padding: '10px 14px',
+                            fontSize: '0.82rem',
+                            color: ACCENT,
+                        }}>
+                            ✓ Domain enabled — Namestone is emailing your API key to <strong>{email}</strong>
+                        </div>
+                    )}
+
+                    {enableStatus === 'error' && (
+                        <p style={{ color: '#ff6666', fontSize: '0.8rem' }}>{enableError}</p>
+                    )}
+
+                    <div>
+                        <label style={label}>Paste API key here when you receive it</label>
+                        <input style={input} type="text" placeholder="ns_…" value={apiKey} onChange={e => setApiKey(e.target.value)} />
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '14px' }}>
