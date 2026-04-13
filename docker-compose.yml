@@ -6,5 +6,5 @@ services:
     ports:
       - "8181:80"
     volumes:
-      - /volume1/docker/ECHO/data/ensub/database:/var/www/html/database
+      - /volume1/docker/ECHO/data/ensub/database/database.sqlite:/var/www/html/database/database.sqlite
     restart: unless-stopped
