@@ -667,10 +667,20 @@ function Step5({
                 </button>
             </div>
 
-            <p style={{ color: '#333', fontSize: '0.75rem' }}>
-                Manage tenants in the{' '}
-                <a href="/admin" style={{ color: '#444', textDecoration: 'underline' }}>admin panel →</a>
-            </p>
+            <a
+                href={result ? `/manage/${result.slug}` : '#'}
+                style={{
+                    display: 'block', textAlign: 'center' as const,
+                    padding: '12px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                    color: '#888', fontSize: '0.85rem',
+                    textDecoration: 'none',
+                }}
+            >
+                Manage your page settings →
+            </a>
         </div>
     )
 }

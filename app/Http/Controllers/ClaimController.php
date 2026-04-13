@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,5 +46,75 @@ class ClaimController extends Controller
                 'gate_type'    => $tenant->gateConfig?->type ?? 'open',
             ],
         ]);
+    }
+
+    public function manage(string $slug): Response
+    {
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+
+        return Inertia::render('Manage', [
+            'tenant' => [
+                'name'              => $tenant->name,
+                'ens_domain'        => $tenant->ens_domain,
+                'slug'              => $tenant->slug,
+                'owner_address'     => $tenant->owner_address,
+                'logo_url'          => $tenant->logo_url,
+                'accent_color'      => $tenant->accent_color,
+                'claim_limit'       => $tenant->claim_limit,
+                'claims_count'      => $tenant->claims()->count(),
+                'plan'              => $tenant->plan,
+                'gate_type'         => $tenant->gateConfig?->type ?? 'open',
+                'contract_address'  => $tenant->gateConfig?->contract_address,
+                'collection_slug'   => $tenant->gateConfig?->collection_slug,
+                'namestone_api_key' => $tenant->namestone_api_key,
+            ],
+        ]);
+    }
+
+    public function manageSave(string $slug, Request $request): JsonResponse
+    {
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+
+        // Verify caller owns this tenant
+        $address = strtolower(trim($request->input('owner_address', '')));
+        if ($address !== strtolower($tenant->owner_address)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'name'             => 'required|string|max:80',
+            'logo_url'         => 'nullable|url|max:500',
+            'accent_color'     => 'nullable|string|max:7',
+            'namestone_api_key'=> 'required|string',
+            'gate_type'        => 'required|in:open,nft,token,allowlist',
+            'contract_address' => 'nullable|string',
+            'collection_slug'  => 'nullable|string',
+            'claim_limit'      => 'nullable|integer|min:1|max:50000',
+        ]);
+
+        $tenant->update([
+            'name'              => $validated['name'],
+            'logo_url'          => $validated['logo_url'] ?? null,
+            'accent_color'      => $validated['accent_color'] ?? $tenant->accent_color,
+            'namestone_api_key' => $validated['namestone_api_key'],
+            'claim_limit'       => $validated['claim_limit'] ?? $tenant->claim_limit,
+        ]);
+
+        // Update or remove gate config
+        if ($validated['gate_type'] === 'open') {
+            $tenant->gateConfig()?->delete();
+        } else {
+            $tenant->gateConfig()->updateOrCreate(
+                ['tenant_id' => $tenant->id],
+                [
+                    'type'             => $validated['gate_type'],
+                    'contract_address' => $validated['contract_address'] ?? null,
+                    'collection_slug'  => $validated['collection_slug'] ?? null,
+                    'max_per_wallet'   => 1,
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
     }
 }
