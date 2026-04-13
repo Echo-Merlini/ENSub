@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Claim;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,8 +70,40 @@ class ClaimController extends Controller
                 'contract_address'  => $tenant->gateConfig?->contract_address,
                 'collection_slug'   => $tenant->gateConfig?->collection_slug,
                 'namestone_api_key' => $tenant->namestone_api_key,
+                'claims'            => $tenant->claims()->latest()->get()->map(fn($c) => [
+                    'id'             => $c->id,
+                    'wallet_address' => $c->wallet_address,
+                    'subdomain'      => $c->subdomain,
+                    'full_name'      => $c->full_name,
+                    'claimed_at'     => $c->created_at->toDateTimeString(),
+                ])->values()->toArray(),
             ],
         ]);
+    }
+
+    public function revokeClaim(string $slug, int $claimId, Request $request): JsonResponse
+    {
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+
+        $address = strtolower(trim($request->input('owner_address', '')));
+        if ($address !== strtolower($tenant->owner_address)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        $claim = Claim::where('id', $claimId)
+            ->where('tenant_id', $tenant->id)
+            ->firstOrFail();
+
+        // Remove from Namestone
+        Http::withHeaders(['Authorization' => $tenant->namestone_api_key])
+            ->post('https://namestone.com/api/public_v1/revoke-name', [
+                'domain' => $tenant->ens_domain,
+                'name'   => $claim->subdomain,
+            ]);
+
+        $claim->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function manageSave(string $slug, Request $request): JsonResponse

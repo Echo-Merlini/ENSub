@@ -6,6 +6,14 @@ import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletCo
 import { mainnet } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
+interface ClaimEntry {
+    id: number
+    wallet_address: string
+    subdomain: string
+    full_name: string
+    claimed_at: string
+}
+
 interface TenantData {
     name: string
     ens_domain: string
@@ -20,6 +28,7 @@ interface TenantData {
     contract_address: string | null
     collection_slug: string | null
     namestone_api_key: string
+    claims: ClaimEntry[]
 }
 
 const queryClient = new QueryClient()
@@ -88,6 +97,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState('')
+    const [claims, setClaims] = useState<ClaimEntry[]>(tenant.claims)
+    const [revoking, setRevoking] = useState<number | null>(null)
 
     const isOwner = isConnected && address?.toLowerCase() === tenant.owner_address.toLowerCase()
 
@@ -112,6 +123,27 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             setError(e.message)
         } finally {
             setSaving(false)
+        }
+    }
+
+    const handleRevoke = async (claim: ClaimEntry) => {
+        if (!address) return
+        setRevoking(claim.id)
+        try {
+            const res = await fetch(`/api/manage/${tenant.slug}/claims/${claim.id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner_address: address }),
+            })
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(data.error || 'Revoke failed')
+            }
+            setClaims(prev => prev.filter(c => c.id !== claim.id))
+        } catch (e: any) {
+            setError(e.message)
+        } finally {
+            setRevoking(null)
         }
     }
 
@@ -289,6 +321,63 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                 </div>
                             </div>
                         )}
+
+                        {/* Claims list */}
+                        <div style={card}>
+                            <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '16px' }}>
+                                Claimed subdomains
+                                <span style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: '0.8rem', marginLeft: '8px' }}>
+                                    ({claims.length})
+                                </span>
+                            </h2>
+                            {claims.length === 0 ? (
+                                <p style={{ color: COLORS.dim, fontSize: '0.85rem', textAlign: 'center', padding: '16px 0' }}>
+                                    No claims yet
+                                </p>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {claims.map(c => (
+                                        <div key={c.id} style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            padding: '10px 12px', borderRadius: '8px',
+                                            background: 'rgba(10,10,30,0.4)',
+                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            gap: '12px',
+                                        }}>
+                                            <div style={{ minWidth: 0 }}>
+                                                <p style={{ color: accent, fontSize: '0.875rem', fontWeight: 'bold',
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {c.full_name}
+                                                </p>
+                                                <p style={{ color: COLORS.dim, fontSize: '0.72rem', fontFamily: 'monospace', marginTop: '2px' }}>
+                                                    {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
+                                                    <span style={{ marginLeft: '8px', color: '#333' }}>
+                                                        {new Date(c.claimed_at).toLocaleDateString()}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleRevoke(c)}
+                                                disabled={revoking === c.id}
+                                                style={{
+                                                    flexShrink: 0,
+                                                    padding: '5px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 'bold',
+                                                    background: 'transparent',
+                                                    border: '1px solid rgba(255,68,68,0.3)',
+                                                    color: revoking === c.id ? COLORS.dim : '#ff6666',
+                                                    cursor: revoking === c.id ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
+                                                {revoking === c.id ? '...' : 'Revoke'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
 
