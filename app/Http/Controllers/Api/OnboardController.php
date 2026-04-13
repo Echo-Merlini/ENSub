@@ -190,6 +190,7 @@ class OnboardController extends Controller
         ]);
 
         if (! $res->successful()) {
+            \Log::warning('Namestone get-siwe-message failed', ['status' => $res->status(), 'body' => $res->body()]);
             return response()->json(['error' => 'Failed to get message from Namestone'], 502);
         }
 
@@ -223,9 +224,15 @@ class OnboardController extends Controller
         ]);
 
         if (! $res->successful()) {
-            $body  = $res->json();
-            $error = $body['message'] ?? $body['error'] ?? 'Namestone enable failed';
-            return response()->json(['error' => $error], 502);
+            $body  = $res->json() ?? [];
+            $error = $body['message'] ?? $body['error'] ?? $res->body() ?: 'Namestone enable failed';
+            \Log::warning('Namestone enable-domain failed', [
+                'status' => $res->status(),
+                'body'   => $res->body(),
+                'domain' => $validated['domain'],
+                'address'=> $validated['address'],
+            ]);
+            return response()->json(['error' => $error], 422);
         }
 
         return response()->json(['success' => true]);
