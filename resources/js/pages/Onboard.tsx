@@ -197,10 +197,30 @@ function Step1({ onDone }: { onDone: () => void }) {
 
 // ─── Step 2: ENS domain verification ──────────────────────────────────────
 
+interface ExistingPage {
+    name: string
+    ens_domain: string
+    slug: string
+    claim_url: string
+}
+
 function Step2({ onDone }: { onDone: (ensDomain: string) => void }) {
+    const { address } = useAccount()
     const [domain, setDomain] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [existingPage, setExistingPage] = useState<ExistingPage | null>(null)
+    const [pageChecked, setPageChecked] = useState(false)
+
+    useEffect(() => {
+        if (!address) return
+        fetch(`/api/onboard/my-page?address=${address}`)
+            .then(r => r.json())
+            .then(data => {
+                setExistingPage(data.found ? data : null)
+                setPageChecked(true)
+            })
+    }, [address])
 
     const handleCheck = async () => {
         const d = domain.trim().toLowerCase()
@@ -233,6 +253,42 @@ function Step2({ onDone }: { onDone: (ensDomain: string) => void }) {
                     We'll verify on-chain that your wallet owns it
                 </p>
             </div>
+
+            {pageChecked && existingPage && (
+                <div style={{
+                    background: 'rgba(0,255,136,0.05)',
+                    border: `1px solid ${ACCENT}44`,
+                    borderRadius: '10px',
+                    padding: '16px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                }}>
+                    <div>
+                        <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '2px' }}>
+                            You already have a page
+                        </p>
+                        <p style={{ fontSize: '0.95rem', color: ACCENT, fontWeight: 'bold' }}>
+                            {existingPage.name}
+                        </p>
+                        <p style={{ fontSize: '0.8rem', color: '#555' }}>*.{existingPage.ens_domain}</p>
+                    </div>
+                    <a
+                        href={existingPage.claim_url}
+                        style={{
+                            padding: '8px 16px',
+                            background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT}cc)`,
+                            color: '#0a0a1a', borderRadius: '8px',
+                            fontWeight: 'bold', fontSize: '0.8rem',
+                            textDecoration: 'none', letterSpacing: '0.05em',
+                            whiteSpace: 'nowrap',
+                        }}>
+                        Go to page →
+                    </a>
+                </div>
+            )}
 
             <div>
                 <label style={label}>ENS Domain</label>

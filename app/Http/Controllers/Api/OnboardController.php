@@ -49,6 +49,26 @@ class OnboardController extends Controller
         return response()->json(['success' => true, 'address' => $address]);
     }
 
+    // Step 1c — GET /api/onboard/my-page?address=0x...
+    public function myPage(Request $request): JsonResponse
+    {
+        $address = strtolower(trim($request->query('address', '')));
+
+        $tenant = Tenant::where('owner_address', $address)->where('active', true)->first();
+
+        if (! $tenant) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json([
+            'found'      => true,
+            'name'       => $tenant->name,
+            'ens_domain' => $tenant->ens_domain,
+            'slug'       => $tenant->slug,
+            'claim_url'  => url("/claim/{$tenant->slug}"),
+        ]);
+    }
+
     // Step 2 — POST /api/onboard/check-ens
     public function checkEns(Request $request): JsonResponse
     {

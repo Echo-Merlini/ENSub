@@ -25,6 +25,7 @@ Route::prefix('api/claim/{slug}')->group(function () {
 // Onboarding API
 Route::prefix('api/onboard')->group(function () {
     Route::get('nonce',      [OnboardController::class, 'nonce']);
+    Route::get('my-page',    [OnboardController::class, 'myPage']);
     Route::post('verify',    [OnboardController::class, 'verify']);
     Route::post('check-ens', [OnboardController::class, 'checkEns']);
     Route::post('create',    [OnboardController::class, 'create']);
