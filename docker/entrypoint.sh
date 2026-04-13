@@ -10,7 +10,7 @@ chmod 775 /var/www/html/database
 
 # Run migrations and seed admin user if missing
 php artisan migrate --force
-php artisan db:seed --force
+php artisan db:seed --class=Database\\Seeders\\DatabaseSeeder --force
 
 # Cache config/routes for production
 php artisan config:cache

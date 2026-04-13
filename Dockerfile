@@ -41,6 +41,9 @@ COPY . .
 # Copy built frontend assets from stage 1
 COPY --from=frontend /app/public/build ./public/build
 
+# Regenerate autoload so seeders/factories are discoverable
+RUN composer dump-autoload --no-dev --optimize
+
 # Laravel bootstrap
 RUN php artisan config:clear \
  && php artisan storage:link \
