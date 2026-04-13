@@ -118,7 +118,7 @@ class OnboardController extends Controller
             'collection_slug'   => 'nullable|string',
             'accent_color'      => 'nullable|string|max:7',
             'logo_url'          => 'nullable|url',
-            'claim_limit'       => 'nullable|integer|min:1|max:10000',
+            'claim_limit'       => 'nullable|integer|min:1|max:10000', // ignored — always free at creation
         ]);
 
         $ensDomain = strtolower($validated['ens_domain']);
@@ -150,7 +150,7 @@ class OnboardController extends Controller
             'accent_color'      => $validated['accent_color'] ?? '#00ff88',
             'logo_url'          => $validated['logo_url'] ?? null,
             'plan'              => 'free',
-            'claim_limit'       => $validated['claim_limit'] ?? 50,
+            'claim_limit'       => 50, // always free limits — Stripe webhook upgrades this after payment
             'active'            => true,
         ]);
 

@@ -714,37 +714,24 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                     )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '14px' }}>
-                    <div style={{ flex: 1 }}>
-                        <label style={label}>Accent Colour</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <input
-                                type="color"
-                                value={accentColor}
-                                onChange={e => setAccentColor(e.target.value)}
-                                style={{
-                                    width: '40px', height: '40px', border: 'none',
-                                    borderRadius: '8px', cursor: 'pointer', background: 'none', padding: 0,
-                                }}
-                            />
-                            <input
-                                style={{ ...input, flex: 1 }}
-                                type="text"
-                                value={accentColor}
-                                onChange={e => setAccentColor(e.target.value)}
-                                maxLength={7}
-                            />
-                        </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <label style={label}>Claim Limit</label>
+                <div>
+                    <label style={label}>Accent Colour</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input
-                            style={input}
-                            type="number"
-                            min="1"
-                            max="10000"
-                            value={claimLimit}
-                            onChange={e => setClaimLimit(e.target.value)}
+                            type="color"
+                            value={accentColor}
+                            onChange={e => setAccentColor(e.target.value)}
+                            style={{
+                                width: '40px', height: '40px', border: 'none',
+                                borderRadius: '8px', cursor: 'pointer', background: 'none', padding: 0,
+                            }}
+                        />
+                        <input
+                            style={{ ...input, flex: 1 }}
+                            type="text"
+                            value={accentColor}
+                            onChange={e => setAccentColor(e.target.value)}
+                            maxLength={7}
                         />
                     </div>
                 </div>
