@@ -258,6 +258,52 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         setChains(prev => prev.filter(c => c.chain_id !== chainId))
     }
 
+    // Redeploy registrar for an existing chain (keeps registry, replaces registrar)
+    const handleRedeployRegistrar = async (ch: ChainEntry) => {
+        setChainSaving(true)
+        setChainError('')
+        setDeployStep('')
+        try {
+            if (currentChainId !== ch.chain_id) {
+                await switchChain({ chainId: ch.chain_id })
+            }
+            setDeployStep('1/2 Deploying registrar…')
+            const deployTxHash = await deployContract(wagmiConfig, {
+                abi: L2_REGISTRAR_ABI,
+                bytecode: L2_REGISTRAR_BYTECODE,
+                args: [ch.registry_address as `0x${string}`],
+                chainId: ch.chain_id,
+            })
+            const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: ch.chain_id })
+            const registrarAddr = deployReceipt.contractAddress
+            if (!registrarAddr) throw new Error('No contract address in receipt')
+
+            setDeployStep('2/2 Authorizing…')
+            const authTxHash = await writeContractAsync({
+                address: ch.registry_address as `0x${string}`,
+                abi: REGISTRY_ABI,
+                functionName: 'addRegistrar',
+                args: [registrarAddr],
+                chainId: ch.chain_id,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: authTxHash, chainId: ch.chain_id })
+
+            // Persist the new registrar address
+            await fetch(`/api/manage/${tenant.slug}/chains/${ch.chain_id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ registrar_address: registrarAddr }),
+            })
+            setChains(prev => prev.map(c => c.chain_id === ch.chain_id ? { ...c, registrar_address: registrarAddr } : c))
+            setDeployStep('')
+        } catch (e: any) {
+            setChainError(e.shortMessage ?? e.message ?? 'Redeploy failed')
+            setDeployStep('')
+        } finally {
+            setChainSaving(false)
+        }
+    }
+
     const handleDeployRegistry = async () => {
         setChainSaving(true)
         setChainError('')
@@ -772,6 +818,13 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             />
                                             {ch.enabled ? 'Enabled' : 'Disabled'}
                                         </label>
+                                        <button
+                                            onClick={() => handleRedeployRegistrar(ch)}
+                                            disabled={chainSaving}
+                                            title="Redeploy registrar (fix minting)"
+                                            style={{ fontSize: '0.72rem', color: accent, background: 'transparent', border: `1px solid ${accent}44`, borderRadius: '4px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '2px 7px', opacity: chainSaving ? 0.5 : 1 }}>
+                                            {chainSaving && deployStep ? deployStep : '⚙ fix'}
+                                        </button>
                                         <button
                                             onClick={() => handleRemoveChain(ch.chain_id)}
                                             style={{ fontSize: '0.75rem', color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
