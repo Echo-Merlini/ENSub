@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title inertia>ENSub</title>
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <meta name="talentapp:project_verification" content="13f82c095b1e9064f94ff7302ee201d67ef4544288e2006ab9e5fa71fea281d4f94383bc5c917bf3d482ce1f20e71c8a4ccc1999e2151df6f69ba8d52f05ec04">
         <link rel="icon" type="image/png" href="/images/ensub-logo.png" sizes="64x64">
         @php $vanta = \App\Models\VantaSetting::frontendConfig(); @endphp
         <script>
