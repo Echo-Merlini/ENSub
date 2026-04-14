@@ -89,20 +89,16 @@ STRIPE_PRICE_BUSINESS=   # price_...
 
 ## Deployment (Coolify on NAS)
 
-- App UUID: `tx65hcp19435t5khjwpqh627`
-- Container port: 80 → host port **8181**
-- Traefik dynamic config: `/volume1/docker/ECHO/data/coolify/proxy/dynamic/ensub.yaml`
-- Cloudflare tunnel: `cloudflared-ensub` container
-- Persistent SQLite: `/volume1/docker/ECHO/data/ensub/database/database.sqlite`
-
-After each redeploy the container IP changes — Traefik routes via fixed host port `127.0.0.1:8181` so no manual updates needed.
+- Container port: 80, reverse-proxied via Traefik
+- Cloudflare tunnel exposes the app publicly
+- Persistent SQLite on a mounted host volume
+- After each redeploy the container IP changes — Traefik routes via a fixed host port so no manual updates needed.
 
 ---
 
 ## Stripe webhook
 
 - Endpoint: `https://www.ensub.org/stripe/webhook`
-- Webhook ID: `we_1TLUw4Hy6KPYkr46RrkDb9ke`
 - Events: `customer.subscription.created/updated/deleted`
 
 ---
