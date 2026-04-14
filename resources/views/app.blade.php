@@ -4,6 +4,8 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title inertia>ENSub</title>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="icon" type="image/png" href="/images/ensub-logo.png" sizes="64x64">
         @php $vanta = \App\Models\VantaSetting::frontendConfig(); @endphp
         <script>
             window.__WALLETCONNECT_PROJECT_ID__ = "{{ env('WALLETCONNECT_PROJECT_ID', '') }}";
