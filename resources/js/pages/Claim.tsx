@@ -179,6 +179,9 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     const [message, setMessage] = useState('')
     const [claimedName, setClaimedName] = useState('')
     const [selectedChain, setSelectedChain] = useState<ChainOption | null>(null) // null = offchain
+    const [mintedChains, setMintedChains] = useState<Set<number>>(new Set())
+    const [mintingChainId, setMintingChainId] = useState<number | null>(null)
+    const [mintError, setMintError] = useState('')
     const accent = tenant.accent_color
 
     const activeChains = tenant.chains ?? []
@@ -191,6 +194,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             .then(data => {
                 if (data.full_name) {
                     setClaimedName(data.full_name)
+                    setName(data.full_name.split('.')[0])
                     setStatus('already-claimed')
                 }
             })
@@ -259,6 +263,32 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
 
     const handleClaim = isL2 ? handleL2Mint : handleOffchainClaim
 
+    // L2 mint from already-claimed state (uses pre-filled subdomain name)
+    const handleL2MintForChain = async (chain: ChainOption) => {
+        if (!address || !chain.registrar_address) return
+        const targetChainId = chain.chain_id
+        const subdomain = claimedName.split('.')[0]
+        try {
+            setMintingChainId(targetChainId)
+            setMintError('')
+            if (chainId !== targetChainId) {
+                await switchChain({ chainId: targetChainId })
+            }
+            await writeContractAsync({
+                address: chain.registrar_address as `0x${string}`,
+                abi: REGISTRAR_ABI,
+                functionName: 'register',
+                args: [subdomain, address as `0x${string}`],
+                chainId: targetChainId,
+            })
+            setMintedChains(prev => new Set([...prev, targetChainId]))
+        } catch (e: any) {
+            setMintError(e.shortMessage ?? e.message ?? 'Transaction failed')
+        } finally {
+            setMintingChainId(null)
+        }
+    }
+
     const statusColor: Partial<Record<Status, string>> = {
         available: accent,
         taken: '#ff4444',
@@ -299,19 +329,88 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     }
 
     if (status === 'already-claimed') {
+        const hasChains = activeChains.length > 0
         return (
-            <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: `${accent}44` }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--text-muted)' }}>✓</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>You already claimed</p>
-                <p style={{ color: accent, fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>{claimedName}</p>
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
+            <div style={{ ...card, padding: '24px 24px', borderColor: `${accent}44` }}>
+                {/* Name header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: hasChains ? '16px' : '12px' }}>
+                    <div style={{ fontSize: '1.2rem', color: accent }}>✓</div>
+                    <div>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>You claimed</p>
+                        <p style={{ color: accent, fontSize: '1.05rem', fontWeight: 'bold', margin: '2px 0 0' }}>{claimedName}</p>
+                    </div>
+                </div>
+
+                {/* Chain status rows */}
+                {hasChains && (
+                    <div style={{ border: '1px solid var(--card-border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
+                        {/* Offchain row — always claimed */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--row-bg)', borderBottom: '1px solid var(--card-border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span>⚡</span>
+                                <div>
+                                    <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text)' }}>Offchain</div>
+                                    <div style={{ fontSize: '0.71rem', color: 'var(--text-dim)' }}>gasless · no gas fee</div>
+                                </div>
+                            </div>
+                            <span style={{ fontSize: '0.78rem', color: accent, fontWeight: 'bold' }}>✓ Claimed</span>
+                        </div>
+
+                        {/* L2 rows */}
+                        {activeChains.map((ch, i) => {
+                            const meta = CHAIN_META[ch.chain_id]
+                            const isMinted = mintedChains.has(ch.chain_id)
+                            const isMinting = mintingChainId === ch.chain_id
+                            const isLast = i === activeChains.length - 1
+                            return (
+                                <div key={ch.chain_id} style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '11px 14px', background: 'var(--card-bg)',
+                                    ...(!isLast ? { borderBottom: '1px solid var(--card-border)' } : {}),
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span>{meta?.icon ?? '🔗'}</span>
+                                        <div>
+                                            <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text)' }}>{ch.chain_name}</div>
+                                            <div style={{ fontSize: '0.71rem', color: 'var(--text-dim)' }}>on-chain NFT · ~$0.01 gas</div>
+                                        </div>
+                                    </div>
+                                    {isMinted ? (
+                                        <span style={{ fontSize: '0.78rem', color: accent, fontWeight: 'bold' }}>✓ Minted</span>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleL2MintForChain(ch)}
+                                            disabled={isMinting || mintingChainId !== null}
+                                            style={{
+                                                padding: '6px 14px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold',
+                                                background: isMinting ? 'var(--row-bg)' : `${accent}18`,
+                                                border: `1px solid ${isMinting ? 'var(--card-border)' : accent + '70'}`,
+                                                color: isMinting ? 'var(--text-dim)' : accent,
+                                                cursor: isMinting || mintingChainId !== null ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.15s',
+                                            }}>
+                                            {isMinting ? '⟳ Minting...' : 'MINT'}
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+
+                {mintError && (
+                    <p style={{ color: '#ff4444', fontSize: '0.78rem', marginBottom: '12px' }}>{mintError}</p>
+                )}
+
+                {/* Links */}
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                     <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                         <img src="/images/ens-logo.svg" alt="" style={{ height: '11px', opacity: 0.75 }} />View on ENS →
                     </a>
                     <span style={{ color: 'var(--text-dim)' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
-                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textDecoration: 'underline' }}>
                         My name page →
                     </a>
                 </div>
