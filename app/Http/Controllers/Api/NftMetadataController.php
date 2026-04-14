@@ -7,6 +7,7 @@ use App\Models\Claim;
 use App\Models\Tenant;
 use App\Models\TenantChain;
 use Illuminate\Http\JsonResponse;
+use kornrunner\Keccak;
 
 class NftMetadataController extends Controller
 {
@@ -35,13 +36,13 @@ class NftMetadataController extends Controller
             return response()->json(['error' => 'Chain not found'], 404);
         }
 
-        // Try to match tokenId to a claim by computing namehash for each subdomain
-        $tokenIdInt = gmp_init($tokenId, 10);
+        // tokenId is uint256(namehash(full_name)) — convert decimal tokenId to 32-byte hex for comparison
+        $tokenIdHex = str_pad(gmp_strval(gmp_init($tokenId, 10), 16), 64, '0', STR_PAD_LEFT);
         $claim      = null;
 
         foreach (Claim::where('tenant_id', $tenant->id)->get() as $c) {
-            $node = $this->namehash($c->full_name);
-            if (gmp_cmp(gmp_init(bin2hex($node), 16), $tokenIdInt) === 0) {
+            $nodeHex = bin2hex($this->namehash($c->full_name));
+            if ($nodeHex === $tokenIdHex) {
                 $claim = $c;
                 break;
             }
@@ -66,7 +67,7 @@ class NftMetadataController extends Controller
         ]);
     }
 
-    // ENS namehash: https://docs.ens.domains/contract-api-reference/name-processing
+    // ENS namehash using keccak256 (NOT sha3-256 — ENS uses pre-standard Keccak)
     private function namehash(string $name): string
     {
         $node = str_repeat("\x00", 32);
@@ -75,7 +76,8 @@ class NftMetadataController extends Controller
         }
         $labels = array_reverse(explode('.', $name));
         foreach ($labels as $label) {
-            $node = hash('sha3-256', $node . hash('sha3-256', $label, true), true);
+            $labelHash = hex2bin(Keccak::hash($label, 256));
+            $node      = hex2bin(Keccak::hash($node . $labelHash, 256));
         }
         return $node;
     }
