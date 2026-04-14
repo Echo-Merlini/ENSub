@@ -246,7 +246,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 try {
                     const decoded = decodeEventLog({ abi: FACTORY_ABI, data: log.data, topics: log.topics as any })
                     if (decoded.eventName === 'RegistryDeployed') {
-                        setNewRegistry((decoded.args as any).registry as string)
+                        const registryAddr = (decoded.args as any).registry as string
+                        setNewRegistry(registryAddr)
+                        setNewRegistrar(registryAddr) // default: registry acts as registrar
                         break
                     }
                 } catch {}
