@@ -88,10 +88,13 @@ html.light button[title*="dark"] {
     color: var(--text-muted) !important;
 }
 
-/* Vanta animated background — make page transparent so effect shows through */
+/* Vanta animated background — canvas is the background, page wrappers must be transparent */
 html.vanta-enabled body {
     background: transparent !important;
 }
-html.vanta-enabled #app > *:first-child {
-    background: transparent !important;
+/* Override the CSS variable so every element using var(--bg-primary) becomes transparent.
+   This works even for inline styles like style="background: var(--bg-primary)" because
+   custom properties cascade from :root / html through the entire DOM. */
+html.vanta-enabled {
+    --bg-primary: transparent;
 }

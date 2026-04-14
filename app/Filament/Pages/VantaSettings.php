@@ -36,29 +36,25 @@ class VantaSettings extends Page implements Forms\Contracts\HasForms
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Colours')
+                Forms\Components\Section::make('🌙 Dark mode colours')
                     ->schema([
-                        Forms\Components\Fieldset::make('🌙 Dark mode')
-                            ->schema([
-                                Forms\Components\ColorPicker::make('color')
-                                    ->label('Line & dot colour')
-                                    ->helperText('e.g. #c5c5c5'),
-                                Forms\Components\ColorPicker::make('background_color')
-                                    ->label('Background colour')
-                                    ->helperText('e.g. #0f1117'),
-                            ])
-                            ->columns(2),
-                        Forms\Components\Fieldset::make('☀️ Light mode')
-                            ->schema([
-                                Forms\Components\ColorPicker::make('color_light')
-                                    ->label('Line & dot colour')
-                                    ->helperText('e.g. #555555'),
-                                Forms\Components\ColorPicker::make('background_color_light')
-                                    ->label('Background colour')
-                                    ->helperText('e.g. #f0f2f5'),
-                            ])
-                            ->columns(2),
-                    ]),
+                        Forms\Components\ColorPicker::make('color')
+                            ->label('Line & dot colour'),
+                        Forms\Components\ColorPicker::make('background_color')
+                            ->label('Background colour'),
+                    ])
+                    ->columns(2)
+                    ->compact(),
+
+                Forms\Components\Section::make('☀️ Light mode colours')
+                    ->schema([
+                        Forms\Components\ColorPicker::make('color_light')
+                            ->label('Line & dot colour'),
+                        Forms\Components\ColorPicker::make('background_color_light')
+                            ->label('Background colour'),
+                    ])
+                    ->columns(2)
+                    ->compact(),
 
                 Forms\Components\Section::make('Mesh')
                     ->schema([
