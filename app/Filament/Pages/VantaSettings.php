@@ -38,14 +38,27 @@ class VantaSettings extends Page implements Forms\Contracts\HasForms
 
                 Forms\Components\Section::make('Colours')
                     ->schema([
-                        Forms\Components\ColorPicker::make('color')
-                            ->label('Line & dot colour')
-                            ->helperText('Hex, e.g. #c5c5c5'),
-                        Forms\Components\ColorPicker::make('background_color')
-                            ->label('Background colour')
-                            ->helperText('Should match your page bg — dark #0f1117, light #f0f2f5'),
-                    ])
-                    ->columns(2),
+                        Forms\Components\Fieldset::make('🌙 Dark mode')
+                            ->schema([
+                                Forms\Components\ColorPicker::make('color')
+                                    ->label('Line & dot colour')
+                                    ->helperText('e.g. #c5c5c5'),
+                                Forms\Components\ColorPicker::make('background_color')
+                                    ->label('Background colour')
+                                    ->helperText('e.g. #0f1117'),
+                            ])
+                            ->columns(2),
+                        Forms\Components\Fieldset::make('☀️ Light mode')
+                            ->schema([
+                                Forms\Components\ColorPicker::make('color_light')
+                                    ->label('Line & dot colour')
+                                    ->helperText('e.g. #555555'),
+                                Forms\Components\ColorPicker::make('background_color_light')
+                                    ->label('Background colour')
+                                    ->helperText('e.g. #f0f2f5'),
+                            ])
+                            ->columns(2),
+                    ]),
 
                 Forms\Components\Section::make('Mesh')
                     ->schema([
@@ -80,14 +93,16 @@ class VantaSettings extends Page implements Forms\Contracts\HasForms
 
         $setting = VantaSetting::instance();
         $setting->update([
-            'enabled'          => $data['enabled'] ?? false,
-            'color'            => $data['color'],
-            'background_color' => $data['background_color'],
-            'points'           => $data['points'],
-            'max_distance'     => $data['max_distance'],
-            'spacing'          => $data['spacing'],
-            'mouse_controls'   => $data['mouse_controls'] ?? false,
-            'touch_controls'   => $data['touch_controls'] ?? false,
+            'enabled'                => $data['enabled'] ?? false,
+            'color'                  => $data['color'],
+            'color_light'            => $data['color_light'],
+            'background_color'       => $data['background_color'],
+            'background_color_light' => $data['background_color_light'],
+            'points'                 => $data['points'],
+            'max_distance'           => $data['max_distance'],
+            'spacing'                => $data['spacing'],
+            'mouse_controls'         => $data['mouse_controls'] ?? false,
+            'touch_controls'         => $data['touch_controls'] ?? false,
         ]);
 
         Notification::make()
