@@ -44,7 +44,6 @@ class ClaimResource extends Resource
                 Tables\Columns\TextColumn::make('minted_chains')
                     ->label('L2 Mints')
                     ->formatStateUsing(function ($state) {
-                        if (empty($state)) return '—';
                         $names = [
                             8453   => 'Base',
                             10     => 'Optimism',
@@ -53,6 +52,11 @@ class ClaimResource extends Resource
                             59144  => 'Linea',
                             534352 => 'Scroll',
                         ];
+                        // Badge mode: called once per element (int); fallback for full array
+                        if (is_int($state) || is_numeric($state)) {
+                            return $names[(int) $state] ?? "Chain {$state}";
+                        }
+                        if (!is_array($state) || empty($state)) return '—';
                         return implode(', ', array_map(fn($id) => $names[$id] ?? "Chain $id", $state));
                     })
                     ->badge()->color('info'),
