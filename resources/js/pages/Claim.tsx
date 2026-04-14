@@ -61,42 +61,32 @@ const CHAIN_META: Record<number, { wagmiChain: any; icon: string }> = {
 
 const queryClient = new QueryClient()
 
-const _projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
-const _alchemyKey = (window as any).__ALCHEMY_KEY__
-const _rpcUrl = _alchemyKey
-    ? `https://eth-mainnet.g.alchemy.com/v2/${_alchemyKey}`
-    : 'https://cloudflare-eth.com'
+function getWagmiConfig() {
+    const projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
+    const alchemyKey = (window as any).__ALCHEMY_KEY__
+    const rpcUrl = alchemyKey
+        ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
+        : 'https://cloudflare-eth.com'
+    return createConfig({
+        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll],
+        connectors: connectorsForWallets(
+            [{ groupName: 'Popular', wallets: [injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet, safeWallet] }],
+            { appName: 'ENSub', projectId }
+        ),
+        transports: {
+            [mainnet.id]:  http(rpcUrl),
+            [base.id]:     http(),
+            [optimism.id]: http(),
+            [arbitrum.id]: http(),
+            [polygon.id]:  http(),
+            [linea.id]:    http(),
+            [scroll.id]:   http(),
+        },
+        ssr: false,
+    })
+}
 
-const _l2Chains = Object.values(CHAIN_META).map(m => m.wagmiChain)
-const wagmiConfig = createConfig({
-    chains: [mainnet, ...(_l2Chains as any)],
-    connectors: connectorsForWallets(
-        [
-            {
-                groupName: 'Popular',
-                wallets: [
-                    injectedWallet,
-                    metaMaskWallet,
-                    rainbowWallet,
-                    coinbaseWallet,
-                    walletConnectWallet,
-                    safeWallet,
-                ],
-            },
-        ],
-        { appName: 'ENSub', projectId: _projectId }
-    ),
-    transports: {
-        [mainnet.id]:  http(_rpcUrl),
-        [base.id]:     http(),
-        [optimism.id]: http(),
-        [arbitrum.id]: http(),
-        [polygon.id]:  http(),
-        [linea.id]:    http(),
-        [scroll.id]:   http(),
-    },
-    ssr: false,
-})
+const wagmiConfig = getWagmiConfig()
 
 function OwnerControls({ tenant }: { tenant: Tenant }) {
     const { address, isConnected } = useAccount()
