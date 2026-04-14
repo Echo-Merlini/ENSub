@@ -76,6 +76,40 @@ class ClaimApiController extends Controller
         ]);
     }
 
+    // POST /api/claim/{slug}/record-l2-mint
+    public function recordL2Mint(string $slug, Request $request): JsonResponse
+    {
+        $tenant = $this->getTenant($slug);
+        if (! $tenant) return $this->notFound();
+
+        $address  = strtolower(trim($request->input('address', '')));
+        $name     = strtolower(trim($request->input('name', '')));
+        $chainId  = (int) $request->input('chain_id', 0);
+        $txHash   = $request->input('tx_hash', null);
+
+        if (! $address || ! $name || ! $chainId) {
+            return response()->json(['error' => 'Missing address, name, or chain_id'], 400);
+        }
+
+        if (! preg_match('/^[a-z0-9-]{3,32}$/', $name)) {
+            return response()->json(['error' => 'Invalid name format'], 400);
+        }
+
+        $full = "{$name}.{$tenant->ens_domain}";
+
+        // Upsert: create the claim record if it doesn't exist yet (L2-only path)
+        Claim::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'wallet_address' => $address],
+            [
+                'subdomain'  => $name,
+                'full_name'  => $full,
+                'tx_hash'    => $txHash,
+            ]
+        );
+
+        return response()->json(['success' => true, 'full_name' => $full]);
+    }
+
     // POST /api/claim/{slug}
     public function claim(string $slug, Request $request): JsonResponse
     {

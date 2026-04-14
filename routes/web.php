@@ -29,9 +29,10 @@ Route::get('/claim/{slug}/my', [ClaimController::class, 'my'])->name('claim.my')
 
 // Claim API (stateless JSON)
 Route::prefix('api/claim/{slug}')->group(function () {
-    Route::get('check',  [ClaimApiController::class, 'check']);
-    Route::get('mine',   [ClaimApiController::class, 'mine']);
-    Route::post('/',     [ClaimApiController::class, 'claim']);
+    Route::get('check',           [ClaimApiController::class, 'check']);
+    Route::get('mine',            [ClaimApiController::class, 'mine']);
+    Route::post('/',              [ClaimApiController::class, 'claim']);
+    Route::post('record-l2-mint', [ClaimApiController::class, 'recordL2Mint']);
 });
 
 // Onboarding API

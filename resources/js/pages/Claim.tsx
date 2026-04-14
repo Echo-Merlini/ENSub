@@ -235,7 +235,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             if (chainId !== targetChainId) {
                 await switchChain({ chainId: targetChainId })
             }
-            await writeContractAsync({
+            const txHash = await writeContractAsync({
                 address: selectedChain.registrar_address as `0x${string}`,
                 abi: REGISTRAR_ABI,
                 functionName: 'register',
@@ -245,6 +245,12 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             const fullName = `${name}.${tenant.ens_domain}`
             setClaimedName(fullName)
             setStatus('claimed')
+            // Record the L2 mint in the DB
+            fetch(`/api/claim/${tenant.slug}/record-l2-mint`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, name, chain_id: targetChainId, tx_hash: txHash }),
+            }).catch(() => {})
         } catch (e: any) {
             setStatus('error')
             setMessage(e.shortMessage ?? e.message ?? 'Transaction failed')
@@ -264,7 +270,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             if (chainId !== targetChainId) {
                 await switchChain({ chainId: targetChainId })
             }
-            await writeContractAsync({
+            const txHash = await writeContractAsync({
                 address: chain.registrar_address as `0x${string}`,
                 abi: REGISTRAR_ABI,
                 functionName: 'register',
@@ -272,6 +278,12 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 chainId: targetChainId,
             })
             setMintedChains(prev => new Set([...prev, targetChainId]))
+            // Record the L2 mint in the DB
+            fetch(`/api/claim/${tenant.slug}/record-l2-mint`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, name: subdomain, chain_id: targetChainId, tx_hash: txHash }),
+            }).catch(() => {})
         } catch (e: any) {
             setMintError(e.shortMessage ?? e.message ?? 'Transaction failed')
         } finally {
