@@ -53,21 +53,21 @@ function getWagmiConfig() {
 const wagmiConfig = getWagmiConfig()
 
 const COLORS = {
-    bg: '#0a0a1a',
-    card: 'rgba(22,33,62,0.7)',
-    border: 'rgba(255,255,255,0.07)',
-    text: '#e4e4e4',
-    muted: '#888',
-    dim: '#555',
+    bg:     'var(--bg-primary)',
+    card:   'var(--card-bg)',
+    border: 'var(--card-border)',
+    text:   'var(--text)',
+    muted:  'var(--text-muted)',
+    dim:    'var(--text-dim)',
 }
 
 const inputStyle = {
     width: '100%',
-    background: 'rgba(10,10,30,0.5)',
-    border: '1.5px solid rgba(255,255,255,0.08)',
+    background: 'var(--input-bg)',
+    border: '1.5px solid var(--input-border)',
     borderRadius: '8px',
     padding: '10px 14px',
-    color: COLORS.text,
+    color: 'var(--text)',
     fontFamily: "'Inter', system-ui, sans-serif",
     fontSize: '0.9rem',
     outline: 'none',
@@ -77,7 +77,7 @@ const inputStyle = {
 const labelStyle = {
     display: 'block',
     fontSize: '0.78rem',
-    color: COLORS.muted,
+    color: 'var(--text-muted)',
     marginBottom: '5px',
     letterSpacing: '0.05em',
 } as const
@@ -154,8 +154,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     }
 
     const card = {
-        background: COLORS.card,
-        border: `1px solid ${COLORS.border}`,
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
         borderRadius: '12px',
         padding: '24px',
     }
@@ -171,7 +171,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             {/* Header */}
             <header style={{
                 borderBottom: `1px solid ${COLORS.border}`,
-                background: 'rgba(15,17,23,0.9)',
+                background: 'var(--header-bg)',
                 backdropFilter: 'blur(8px)',
                 padding: '16px 32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -377,8 +377,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         <div key={c.id} style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '10px 12px', borderRadius: '8px',
-                                            background: 'rgba(10,10,30,0.4)',
-                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            background: 'var(--row-bg)',
+                                            border: '1px solid var(--row-border)',
                                             gap: '12px',
                                         }}>
                                             <div style={{ minWidth: 0 }}>
@@ -388,7 +388,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                 </p>
                                                 <p style={{ color: COLORS.dim, fontSize: '0.72rem', fontFamily: 'monospace', marginTop: '2px' }}>
                                                     {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
-                                                    <span style={{ marginLeft: '8px', color: '#333' }}>
+                                                    <span style={{ marginLeft: '8px', color: 'var(--text-dim)' }}>
                                                         {new Date(c.claimed_at).toLocaleDateString()}
                                                     </span>
                                                 </p>
@@ -425,8 +425,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                             const btnStyle = {
                                 display: 'flex', alignItems: 'center', gap: '6px',
                                 padding: '8px 14px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
-                                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                                color: '#888', textDecoration: 'none', cursor: 'pointer',
+                                background: 'var(--row-bg)', border: '1px solid var(--row-border)',
+                                color: 'var(--text-muted)', textDecoration: 'none', cursor: 'pointer',
                             } as const
                             return (
                                 <div style={card}>
@@ -486,9 +486,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     Drop this snippet anywhere on your site to embed the claim widget.
                                 </p>
                                 <pre style={{
-                                    background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)',
+                                    background: 'var(--pre-bg)', border: '1px solid var(--pre-border)',
                                     borderRadius: '8px', padding: '14px', fontSize: '0.72rem',
-                                    color: '#aaa', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                                    color: 'var(--text-muted)', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
                                     fontFamily: "'Fira Code', 'Courier New', monospace", margin: 0,
                                 }}>{`<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="480"\n  height="560"\n  frameborder="0"\n  style="border-radius:12px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`}</pre>
                                 <button
@@ -501,9 +501,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     style={{
                                         marginTop: '10px', padding: '8px 16px', borderRadius: '8px',
                                         fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer',
-                                        background: embedCopied ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.05)',
-                                        border: `1px solid ${embedCopied ? '#00ff8844' : 'rgba(255,255,255,0.08)'}`,
-                                        color: embedCopied ? '#00ff88' : '#888',
+                                        background: embedCopied ? 'rgba(0,255,136,0.1)' : 'var(--row-bg)',
+                                        border: `1px solid ${embedCopied ? '#00ff8844' : 'var(--row-border)'}`,
+                                        color: embedCopied ? '#00ff88' : 'var(--text-muted)',
                                     }}>
                                     {embedCopied ? '✓ Copied!' : 'Copy snippet'}
                                 </button>
@@ -531,8 +531,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                     </>
                 )}
 
-                <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
-                    Powered by <a href="/" style={{ color: '#3a3a3a', textDecoration: 'underline' }}>ENSub</a>
+                <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                    Powered by <a href="/" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>ENSub</a>
                 </p>
             </div>
         </main>

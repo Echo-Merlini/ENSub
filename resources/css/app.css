@@ -5,12 +5,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #161b27;
-    --accent: #00ff88;
-    --border: rgba(255, 255, 255, 0.06);
-    --text: #e4e4e4;
-    --text-muted: #6b7280;
+    --bg-primary:    #0f1117;
+    --bg-secondary:  #161b27;
+    --accent:        #00ff88;
+    --border:        rgba(255, 255, 255, 0.06);
+    --text:          #e4e4e4;
+    --text-muted:    #888;
+    --text-dim:      #555;
+    --card-bg:       rgba(22, 33, 62, 0.7);
+    --card-border:   rgba(255, 255, 255, 0.07);
+    --input-bg:      rgba(10, 10, 30, 0.5);
+    --input-border:  rgba(255, 255, 255, 0.08);
+    --row-bg:        rgba(10, 10, 30, 0.4);
+    --row-border:    rgba(255, 255, 255, 0.05);
+    --pre-bg:        rgba(0, 0, 0, 0.4);
+    --pre-border:    rgba(255, 255, 255, 0.06);
+    --header-bg:     rgba(15, 17, 23, 0.9);
 }
 
 body {
@@ -27,8 +37,18 @@ html.light {
     --bg-primary:   #f0f2f5;
     --bg-secondary: #e2e8f0;
     --border:       rgba(0, 0, 0, 0.08);
-    --text:         #0f1117;
+    --text:         #111827;
     --text-muted:   #374151;
+    --text-dim:     #4b5563;
+    --card-bg:      rgba(255, 255, 255, 0.9);
+    --card-border:  rgba(0, 0, 0, 0.1);
+    --input-bg:     #ffffff;
+    --input-border: rgba(0, 0, 0, 0.15);
+    --row-bg:       rgba(0, 0, 0, 0.04);
+    --row-border:   rgba(0, 0, 0, 0.08);
+    --pre-bg:       rgba(0, 0, 0, 0.05);
+    --pre-border:   rgba(0, 0, 0, 0.1);
+    --header-bg:    rgba(240, 242, 245, 0.95);
 }
 
 html.light body {
@@ -36,81 +56,34 @@ html.light body {
     color: var(--text);
 }
 
-/* Nav / header bars */
+/* Nav / header */
 html.light nav,
 html.light header {
-    background: rgba(240, 242, 245, 0.92) !important;
-    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+    background: var(--header-bg) !important;
+    border-bottom-color: var(--card-border) !important;
 }
 
 html.light main {
     background: var(--bg-primary);
 }
 
-/* ── Card surfaces (all rgba(22,33,62 … variants) ── */
-html.light [style*="rgba(22,33,62"],
-html.light [style*="rgba(22, 33, 62"],
-html.light [style*="background: rgba(22"] {
-    background: rgba(255, 255, 255, 0.85) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Darker section backgrounds used in Onboard / Claim */
-html.light [style*="background: #0a0a1a"],
-html.light [style*="background: #0f1117"],
-html.light [style*="background: rgba(10,10"] {
-    background: #f0f2f5 !important;
-}
-
-/* Inputs */
+/* Inputs / selects / textareas */
 html.light input,
 html.light textarea,
-html.light select,
-html.light [style*="background: rgba(10,12"],
-html.light [style*="background: rgba(10, 12"],
-html.light [style*="background: rgba(15,17"],
-html.light [style*="background: rgba(15, 17"] {
-    background: #fff !important;
-    color: #0f1117 !important;
-    border-color: rgba(0, 0, 0, 0.15) !important;
+html.light select {
+    background: var(--input-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--input-border) !important;
 }
 
-/* ── Text — darker greys for readability ── */
-html.light [style*="color: #888"],
-html.light [style*="color: #777"],
-html.light [style*="color: #666"],
-html.light [style*="color: #555"],
-html.light [style*="color: #444"] {
-    color: #374151 !important;
-}
-
-html.light [style*="color: #aaa"],
-html.light [style*="color: #999"],
-html.light [style*="color: #bbb"],
-html.light [style*="color: #ccc"] {
-    color: #4b5563 !important;
-}
-
-html.light [style*="color: #e4e4e4"],
-html.light [style*="color: #ddd"],
-html.light [style*="color: #d0d0d0"] {
-    color: #111827 !important;
-}
-
-/* Footer / ultra-muted text */
+/* Footer */
 html.light footer {
-    border-top-color: rgba(0, 0, 0, 0.08) !important;
-}
-html.light [style*="color: #2a2a2a"],
-html.light [style*="color: #1e1e1e"],
-html.light [style*="color: #333"],
-html.light [style*="color: #222"] {
-    color: #6b7280 !important;
+    border-top-color: var(--card-border) !important;
 }
 
-/* Theme toggle button border */
+/* Theme toggle button */
 html.light button[title*="light"],
 html.light button[title*="dark"] {
-    border-color: rgba(0, 0, 0, 0.15) !important;
-    color: #374151 !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-muted) !important;
 }
