@@ -27,8 +27,9 @@ const CHAIN_META: Record<number, { wagmiChain: any }> = {
 }
 
 const FACTORY_ADDRESS    = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
-const L1_RESOLVER_ADDRESS = '0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61' as const
-const ENS_REGISTRY_ADDRESS = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e' as const
+const L1_RESOLVER_ADDRESS       = '0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61' as const
+const NAMESTONE_RESOLVER_ADDRESS = '0xA87361C4E58B619c390f469B9E6F27d759715125' as const
+const ENS_REGISTRY_ADDRESS       = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e' as const
 
 const L1_RESOLVER_ABI = [
     {
@@ -440,8 +441,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         }
     }
 
-    // Phase 2: set ENS resolver to L1Resolver on mainnet
-    const handleSetResolver = async () => {
+    // Phase 2: set ENS resolver (generic — takes target address)
+    const handleSetResolverTo = async (resolverAddress: `0x${string}`, label: string) => {
         setEnsResolutionSaving(true)
         setEnsResolutionError('')
         setEnsResolutionStep('')
@@ -449,13 +450,13 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             if (currentChainId !== mainnet.id) {
                 await switchChain({ chainId: mainnet.id })
             }
-            setEnsResolutionStep('Setting resolver on mainnet…')
+            setEnsResolutionStep(`${label}…`)
             const node = namehash(tenant.ens_domain)
             const txHash = await writeContractAsync({
                 address: ENS_REGISTRY_ADDRESS,
                 abi: ENS_REGISTRY_ABI,
                 functionName: 'setResolver',
-                args: [node, L1_RESOLVER_ADDRESS],
+                args: [node, resolverAddress],
                 chainId: mainnet.id,
             })
             await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: mainnet.id })
@@ -467,6 +468,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             setEnsResolutionSaving(false)
         }
     }
+
+    const handleSetResolver         = () => handleSetResolverTo(L1_RESOLVER_ADDRESS,       'Setting Durin resolver on mainnet')
+    const handleRevertToNamestone   = () => handleSetResolverTo(NAMESTONE_RESOLVER_ADDRESS, 'Reverting to Namestone resolver')
 
     // Phase 2: register L2Registry with L1Resolver on mainnet for a specific chain
     const handleSetL2Registry = async (ch: ChainEntry) => {
@@ -1079,6 +1083,13 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--row-border)', color: COLORS.muted, borderRadius: '6px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                                             Or use ENS app ↗
                                         </a>
+                                        <button
+                                            onClick={handleRevertToNamestone}
+                                            disabled={ensResolutionSaving}
+                                            title={`Revert to Namestone resolver (${NAMESTONE_RESOLVER_ADDRESS})`}
+                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', color: '#ff6666', borderRadius: '6px', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1 }}>
+                                            {ensResolutionSaving && ensResolutionStep.includes('Namestone') ? `⟳ ${ensResolutionStep}` : '↩ Revert to Namestone'}
+                                        </button>
                                     </div>
                                 </div>
 
