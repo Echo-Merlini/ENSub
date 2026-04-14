@@ -381,10 +381,11 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                             src={tenant.logo_url}
                                             alt={tenant.name}
                                             style={{
+                                                display: 'block',
                                                 width: '64px', height: '64px',
                                                 borderRadius: '14px',
                                                 imageRendering: 'pixelated',
-                                                marginBottom: '16px',
+                                                margin: '0 auto 16px',
                                                 boxShadow: `0 0 20px ${accent}40`,
                                             }}
                                         />
@@ -420,18 +421,18 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                         ENS subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
                                         Claiming yours gives your wallet a human-readable name you actually own, not just a username on a platform.
                                     </p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                                         {[
-                                            '🔗  Receive crypto to your name instead of a long address',
-                                            '🪪  Log into ENS-compatible dApps with a real identity',
-                                            '🌐  Carry it across the entire ENS ecosystem',
-                                            '🔮  As ENS adoption grows, so does every name\'s utility',
+                                            'Receive crypto to your name instead of a long address',
+                                            'Log into ENS-compatible dApps with a real identity',
+                                            'Carry it across the entire ENS ecosystem',
+                                            'As ENS adoption grows, so does every name\'s utility',
                                         ].map(item => (
-                                            <p key={item} style={{ fontSize: '0.78rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
+                                            <li key={item} style={{ fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.5 }}>
                                                 {item}
-                                            </p>
+                                            </li>
                                         ))}
-                                    </div>
+                                    </ul>
                                 </div>
 
                                 {tenant.plan === 'free' && (
