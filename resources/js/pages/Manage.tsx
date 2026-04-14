@@ -272,6 +272,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 abi: L2_REGISTRAR_ABI,
                 bytecode: L2_REGISTRAR_BYTECODE,
                 args: [ch.registry_address as `0x${string}`],
+                account: address as `0x${string}`,
                 chainId: ch.chain_id,
             })
             const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: ch.chain_id })
@@ -345,6 +346,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 abi: L2_REGISTRAR_ABI,
                 bytecode: L2_REGISTRAR_BYTECODE,
                 args: [registryAddr as `0x${string}`],
+                account: address as `0x${string}`,
                 chainId: newChainId,
             })
             const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: newChainId })
@@ -821,9 +823,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         <button
                                             onClick={() => handleRedeployRegistrar(ch)}
                                             disabled={chainSaving}
-                                            title="Redeploy registrar (fix minting)"
-                                            style={{ fontSize: '0.72rem', color: accent, background: 'transparent', border: `1px solid ${accent}44`, borderRadius: '4px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '2px 7px', opacity: chainSaving ? 0.5 : 1 }}>
-                                            {chainSaving && deployStep ? deployStep : '⚙ fix'}
+                                            title="Redeploy L2Registrar and re-authorize it on the registry (fixes minting)"
+                                            style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '5px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '3px 9px', opacity: chainSaving ? 0.5 : 1, fontWeight: 'bold', whiteSpace: 'nowrap' as const }}>
+                                            {chainSaving && deployStep ? deployStep : '⚙ Fix'}
                                         </button>
                                         <button
                                             onClick={() => handleRemoveChain(ch.chain_id)}
