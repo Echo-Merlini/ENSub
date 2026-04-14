@@ -196,7 +196,7 @@ export default function Home() {
                 height: '60px',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src="/images/ensub-logo.png" alt="ENSub" style={{ width: '28px', height: '28px', borderRadius: '6px' }} />
+                    <img src="/images/ensub-logo.gif" alt="ENSub" style={{ width: '28px', height: '28px', borderRadius: '6px' }} />
                     <span style={{
                         fontSize: '0.85rem',
                         fontWeight: 'bold',
@@ -256,7 +256,7 @@ export default function Home() {
 
                 <div style={{ position: 'relative', maxWidth: '800px', margin: '0 auto' }}>
                     <img
-                        src="/images/ensub-logo.png"
+                        src="/images/ensub-logo.gif"
                         alt="ENSub"
                         style={{ width: '72px', height: '72px', borderRadius: '16px', display: 'block', margin: '0 auto 20px' }}
                     />
