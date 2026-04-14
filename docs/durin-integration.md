@@ -1,7 +1,7 @@
-# Durin Integration Plan
+# Durin Integration
 
 **Goal:** Add on-chain L2 subdomain minting (via Durin) as an optional add-on to ENSub's existing offchain (Namestone) flow.  
-**Status:** 🔵 In progress — Phase 1
+**Status:** ✅ Phase 1 + Phase 2 done — Phase 3 pending
 
 ---
 
@@ -14,55 +14,55 @@ Site: https://durin.dev/
 **Core contracts:**
 | Contract | Address | Role |
 |---|---|---|
-| L1Resolver | `0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61` | ENS mainnet entry point, forwards to L2 |
+| L1Resolver | `0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61` | ENS mainnet entry point, forwards to L2 via CCIP-Read |
 | L2RegistryFactory | `0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d` | Permissionless registry deployer (same address on all chains) |
 | L2Registry | deployed per tenant | ERC-721, tracks subdomain ownership + records |
 | L2Registrar | deployed per tenant | Controls mint logic (pricing, gating, expiry) |
 
-**Supported chains (mainnet):** Arbitrum, Base, Celo, Linea, Optimism, Polygon, Scroll, Worldchain
+**Resolver addresses:**
+| Resolver | Address | Role |
+|---|---|---|
+| Namestone offchain | `0xA87361C4E58B619c390f469B9E6F27d759715125` | CCIP-Read → Namestone DB (gasless) |
+| Durin L1Resolver | `0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61` | CCIP-Read → L2Registry (on-chain NFT) |
+
+**Supported chains:** Arbitrum · Base · Celo · Linea · Optimism · Polygon · Scroll · Worldchain
 
 ---
 
 ## Product Design
 
-### Manage page — "Claim Chains" section
-- Offchain (Namestone) always shown as default, always on
-- Owner can add L2 chains: select chain → deploy registry + registrar (wallet txs) → chain appears on claim page
-- Per-chain toggle to enable/disable
-- Shows registry + registrar contract addresses
+### Manage page
+- **L2 Claim Chains** section: add chain → deploy registry + registrar (in-browser wallet txs) → chain active on claim page. Per-chain toggle, ⚙ Fix button to redeploy registrar.
+- **ENS On-chain Resolution** section (shown when ≥1 chain deployed): Step 1 set resolver, Step 2 register each L2 registry on mainnet. Revert to Namestone button included.
 
-### Claim page — chain dropdown
+### Claim page
 ```
-[Offchain — gasless ▼]
-  Offchain (gasless)      ← default, current Namestone flow
+[Ξ ETH — Gasless ▼]   ← always shown, Namestone offchain
   ─────────────────
-  Base
-  Optimism
-  Arbitrum
+  🔵 Base              ← shown per configured L2 chain
+  🔴 Optimism
 ```
-Selecting an L2 chain swaps the claim button to a `L2Registrar.register()` tx on that chain.  
-Includes "Switch to [Chain]" step if wallet is on wrong network.
-
-### Business logic
-- Offchain (Namestone) = always available, current free/pro limits apply
-- L2 chains = Pro/Business add-on (natural upgrade hook)
-- Claims from all chains merged in Manage claims list with "Source" column
+Selecting an L2 chain triggers `L2Registrar.register()` on that chain. 1-per-wallet per chain enforced in UI; seeded from DB on page load.
 
 ---
 
 ## DB Schema
 
-### New table: `tenant_chains`
+### `tenant_chains`
 ```
 id
 tenant_id          FK → tenants.id
 chain_id           int  (8453=Base, 10=Optimism, 42161=Arbitrum, 137=Polygon, etc.)
-chain_name         string (Base, Optimism, Arbitrum, Polygon, ...)
-chain_rpc_url      string nullable (optional custom RPC)
+chain_name         string
 registry_address   string nullable
 registrar_address  string nullable
 enabled            bool default true
 created_at / updated_at
+```
+
+### `claims` additions
+```
+minted_chains      JSON nullable  — array of chain IDs where this wallet has minted
 ```
 
 ---
@@ -71,60 +71,58 @@ created_at / updated_at
 
 ### ✅ Phase 0 — Planning
 - [x] Research Durin architecture
-- [x] Define product design (chain dropdown on claim, chain selector on manage)
+- [x] Define product design
 - [x] Define DB schema
 
 ---
 
-### 🔵 Phase 1 — Foundation (manual setup)
-**Goal:** Full UI with manual contract address entry. No automated deployment yet.
-
-- [ ] Migration: create `tenant_chains` table
-- [ ] Model: `TenantChain.php`
-- [ ] API: CRUD endpoints for tenant chains (`/api/manage/{slug}/chains`)
-- [ ] Manage page: "Claim Chains" section (add/toggle/remove chains, enter addresses manually)
-- [ ] Claim page: chain dropdown, L2 mint flow (wagmi contract call)
-- [ ] Manage claims list: add source column
-
----
-
-### ⬜ Phase 2 — Automated deployment
-**Goal:** One-click chain activation from Manage page.
-
-- [ ] Frontend: wallet flow to call `L2RegistryFactory.deployRegistry()` on L2
-- [ ] Frontend: wallet flow to deploy `L2Registrar` with gate config
-- [ ] Frontend: call `L2Registry.addRegistrar(registrarAddress)`
-- [ ] Frontend: guide owner to set Durin L1Resolver on mainnet ENS (replaces Namestone resolver)
-- [ ] Auto-populate registry + registrar addresses in DB on success
+### ✅ Phase 1 — Foundation
+- [x] Migration: `tenant_chains` table
+- [x] Migration: `minted_chains` JSON column on `claims`
+- [x] Model: `TenantChain.php` + `Claim.php` cast
+- [x] API: CRUD endpoints for tenant chains
+- [x] Manage page: L2 Chains section (deploy or paste addresses, toggle, remove, ⚙ Fix)
+- [x] Claim page: chain selector, L2 mint flow, 1-per-wallet UI enforcement
+- [x] `record-l2-mint` API endpoint — records chain ID after successful mint tx
+- [x] Manage claims list: `Ξ ETH` badge + per-chain mint badges
+- [x] Filament admin: L2 Mints column
 
 ---
 
-### ⬜ Phase 3 — Cross-chain claims sync
-**Goal:** Read on-chain claims from L2 registries.
-
-- [ ] Index `NameRegistered` events from each L2Registry via Alchemy
-- [ ] Sync to `claims` table with `source` = chain name
-- [ ] Revoke = call `L2Registry.burn()` (owner-gated)
+### ✅ Phase 2 — ENS On-chain Resolution
+- [x] Deploy flow: `L2RegistryFactory.deployRegistry()` + deploy `L2Registrar` + `addRegistrar()` + `setBaseURI()` — all in one click
+- [x] NFT metadata endpoint: `GET /nft/{slug}/{chainId}/{tokenId}` — resolves tokenId via keccak256 namehash, returns ERC-721 JSON with animated GIF image
+- [x] Manage page: ENS On-chain Resolution card
+  - [x] Step 1: `ENSRegistry.setResolver(node, L1ResolverAddress)` on mainnet
+  - [x] Step 2: `L1Resolver.setL2Registry(node, chainId, registryAddress)` per chain
+  - [x] ↩ Revert to Namestone button
+  - [x] Amber warning about breaking Namestone offchain resolution
 
 ---
 
-## Supported Chain Config (for frontend dropdown)
+### ⬜ Phase 3 — Cross-chain Claims Sync
+**Goal:** Index on-chain L2 mints so they appear in the claims list even if the user bypassed the claim page.
 
-```ts
-export const DURIN_CHAINS = [
-  { id: 8453,  name: 'Base',      icon: '🔵' },
-  { id: 10,    name: 'Optimism',  icon: '🔴' },
-  { id: 42161, name: 'Arbitrum',  icon: '🔷' },
-  { id: 137,   name: 'Polygon',   icon: '🟣' },
-  { id: 59144, name: 'Linea',     icon: '⬛' },
-  { id: 534352,name: 'Scroll',    icon: '🟡' },
-]
-```
+- [ ] Index `NameRegistered` events from each tenant's L2Registry via Alchemy webhooks or polling
+- [ ] Sync to `claims` table (create record if missing, update `minted_chains`)
+- [ ] Revoke = call `L2Registry.burn(tokenId)` on the correct L2 chain (owner-gated)
+
+---
+
+### ⬜ Phase 4 — Registrar Upgrades
+**Goal:** Contract-level enforcement and paid/gated minting.
+
+- [ ] Custom L2Registrar with on-chain 1-per-wallet check
+- [ ] Paid registrar: configurable mint price, treasury address
+- [ ] Expiry support: subdomain renewal flow
+- [ ] Gate at contract level: NFT/token-gated minting matching the tenant's gate config
 
 ---
 
 ## Notes / Decisions Log
 
-- **Dual-resolver complexity:** Running Namestone (offchain) AND Durin (L2) simultaneously requires the L1Resolver to handle both. To avoid this, L2 chains are an opt-in add-on — tenants can keep Namestone as offchain fallback, L2 chains are additive on the claim page. Resolver upgrade to Durin's L1Resolver is guided in Phase 2 when the owner activates their first L2 chain.
-- **Phase 1 uses manual address entry** so we can test the full claim flow end-to-end before building the automated deployment in Phase 2.
-- **Free tier gate:** L2 chain options only shown on claim page if the tenant is on Pro/Business plan.
+- **Dual-resolver trade-off:** Switching to Durin L1Resolver breaks Namestone offchain resolution — these are incompatible at the ENS resolver level. ENSub shows a clear warning before Step 1 and provides a revert button. Migration path: encourage all claimants to mint on at least one L2 chain, then switch.
+- **keccak256 vs SHA3-256:** ENS namehash uses pre-standard Keccak (not NIST SHA3). PHP `hash('sha3-256')` is wrong — must use `kornrunner/Keccak::hash()`.
+- **L2 TLD limitation:** `.base`, `.op` etc. are separate name systems not accessible through Durin. L2 chains are storage/NFT layers only; names stay `.eth`.
+- **deployContract vs sendTransaction:** wagmi's `sendTransaction` without explicit `account` doesn't produce a contract creation tx (contractAddress = null). Must use `deployContract` with `account: address`.
+- **Open registrar:** Current L2Registrar is free/open — anyone can call `register()` directly. 1-per-wallet is UI-only until Phase 4.
