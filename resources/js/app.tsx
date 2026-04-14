@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { createInertiaApp } from '@inertiajs/react'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { useEffect } from 'react'
+import VantaBackground from './components/VantaBackground'
 
 // Keeps html.light class in sync with localStorage across all pages
 function ThemeSync() {
@@ -25,7 +26,7 @@ createInertiaApp({
             import.meta.glob('./pages/**/*.tsx')
         ),
     setup({ el, App, props }) {
-        createRoot(el).render(<><ThemeSync /><App {...props} /></>)
+        createRoot(el).render(<><ThemeSync /><VantaBackground /><App {...props} /></>)
     },
     progress: {
         color: '#00ff88',

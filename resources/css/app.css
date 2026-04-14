@@ -87,3 +87,11 @@ html.light button[title*="dark"] {
     border-color: var(--card-border) !important;
     color: var(--text-muted) !important;
 }
+
+/* Vanta animated background — make page transparent so effect shows through */
+html.vanta-enabled body {
+    background: transparent !important;
+}
+html.vanta-enabled #app > *:first-child {
+    background: transparent !important;
+}
