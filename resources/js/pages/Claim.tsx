@@ -96,13 +96,13 @@ function ShareBar({ tenant }: { tenant: Tenant }) {
     const btnStyle = {
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '7px 13px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 'bold',
-        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--row-bg)', border: '1px solid var(--card-border)',
         color: 'var(--text-muted)', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
     } as const
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.73rem', color: '#3a3a3a', marginRight: '2px' }}>Share</span>
+            <span style={{ fontSize: '0.73rem', color: 'var(--text-dim)', marginRight: '2px' }}>Share</span>
             <a href={twitterUrl} target="_blank" rel="noopener noreferrer" style={{ ...btnStyle, color: '#1d9bf0' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.258 5.632 5.907-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -231,7 +231,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                         style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         View on ENS →
                     </a>
-                    <span style={{ color: '#3a3a3a' }}>·</span>
+                    <span style={{ color: 'var(--text-dim)' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
                         style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         My name page →
@@ -253,7 +253,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                         style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         View on ENS →
                     </a>
-                    <span style={{ color: '#3a3a3a' }}>·</span>
+                    <span style={{ color: 'var(--text-dim)' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
                         style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         Bookmark my name →
@@ -279,8 +279,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Choose your name</label>
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'rgba(10,10,30,0.5)',
-                    border: `1.5px solid ${status === 'available' ? accent + '99' : status === 'taken' ? 'rgba(255,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                    background: 'var(--input-bg)',
+                    border: `1.5px solid ${status === 'available' ? accent + '99' : status === 'taken' ? 'rgba(255,68,68,0.5)' : 'var(--input-border)'}`,
                     borderRadius: '10px',
                     boxShadow: status === 'available' ? `0 0 0 3px ${accent}20` : 'none',
                     padding: '12px 16px',
@@ -297,7 +297,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                             color: 'var(--text)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1rem', padding: 0,
                         }}
                     />
-                    <span style={{ color: '#555', fontSize: '0.875rem', flexShrink: 0 }}>
+                    <span style={{ color: 'var(--text-dim)', fontSize: '0.875rem', flexShrink: 0 }}>
                         .{tenant.ens_domain}
                     </span>
                 </div>
@@ -306,7 +306,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                         {statusText[status]}
                     </p>
                 )}
-                <p style={{ fontSize: '0.75rem', color: '#3a3a3a' }}>3–32 chars · lowercase, numbers, hyphens</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>3–32 chars · lowercase, numbers, hyphens</p>
             </div>
 
             {status === 'error' && <p style={{ color: '#ff4444', fontSize: '0.875rem' }}>{message}</p>}
@@ -318,8 +318,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                     width: '100%', padding: '14px',
                     background: status === 'available'
                         ? `linear-gradient(135deg, ${accent}, ${accent}cc)`
-                        : 'rgba(255,255,255,0.06)',
-                    color: status === 'available' ? '#0a0a1a' : '#555',
+                        : 'var(--row-bg)',
+                    color: status === 'available' ? '#0a0a1a' : 'var(--text-dim)',
                     border: 'none', borderRadius: '8px',
                     fontWeight: 'bold', fontSize: '0.9rem', letterSpacing: '0.08em',
                     cursor: status === 'available' ? 'pointer' : 'not-allowed',
@@ -330,7 +330,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 {status === 'claiming' ? '⟳ CLAIMING...' : 'CLAIM'}
             </button>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#3a3a3a' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                 <span>No gas required{tenant.plan === 'free' ? ' · Powered by ENSub' : ''}</span>
                 <span>{tenant.claims_count}/{tenant.claim_limit} claimed</span>
             </div>
@@ -376,6 +376,19 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                             <div style={{ width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                                 <div style={{ textAlign: 'center' }}>
+                                    {tenant.logo_url && (
+                                        <img
+                                            src={tenant.logo_url}
+                                            alt={tenant.name}
+                                            style={{
+                                                width: '64px', height: '64px',
+                                                borderRadius: '14px',
+                                                imageRendering: 'pixelated',
+                                                marginBottom: '16px',
+                                                boxShadow: `0 0 20px ${accent}40`,
+                                            }}
+                                        />
+                                    )}
                                     <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                                         Claim your subdomain
                                     </h1>
@@ -392,10 +405,39 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
 
                                 <ShareBar tenant={tenant} />
 
+                                {/* Why claim section */}
+                                <div style={{
+                                    borderTop: '1px solid var(--card-border)',
+                                    paddingTop: '20px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '10px',
+                                }}>
+                                    <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                        Why claim a subdomain?
+                                    </p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.65, margin: 0 }}>
+                                        ENS subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
+                                        Claiming yours gives your wallet a human-readable name you actually own, not just a username on a platform.
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        {[
+                                            '🔗  Receive crypto to your name instead of a long address',
+                                            '🪪  Log into ENS-compatible dApps with a real identity',
+                                            '🌐  Carry it across the entire ENS ecosystem',
+                                            '🔮  As ENS adoption grows, so does every name\'s utility',
+                                        ].map(item => (
+                                            <p key={item} style={{ fontSize: '0.78rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
+                                                {item}
+                                            </p>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 {tenant.plan === 'free' && (
-                                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
+                                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                                         Powered by{' '}
-                                        <a href="/" style={{ color: '#3a3a3a', textDecoration: 'underline' }}>ENSub</a>
+                                        <a href="/" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>ENSub</a>
                                     </p>
                                 )}
                             </div>
