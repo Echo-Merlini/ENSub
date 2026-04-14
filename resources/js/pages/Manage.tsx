@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
+import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { decodeEventLog } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
-import { mainnet } from 'wagmi/chains'
+import { mainnet, base, optimism, arbitrum, polygon, linea, scroll } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
 const DURIN_CHAINS = [
@@ -14,6 +16,36 @@ const DURIN_CHAINS = [
     { id: 59144,  name: 'Linea',     icon: '⬛' },
     { id: 534352, name: 'Scroll',    icon: '🟡' },
 ]
+
+const CHAIN_META: Record<number, { wagmiChain: any }> = {
+    8453:   { wagmiChain: base     },
+    10:     { wagmiChain: optimism },
+    42161:  { wagmiChain: arbitrum },
+    137:    { wagmiChain: polygon  },
+    59144:  { wagmiChain: linea    },
+    534352: { wagmiChain: scroll   },
+}
+
+const FACTORY_ADDRESS = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
+
+const FACTORY_ABI = [
+    {
+        name: 'deployRegistry',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: 'name', type: 'string' }],
+        outputs: [{ name: '', type: 'address' }],
+    },
+    {
+        name: 'RegistryDeployed',
+        type: 'event',
+        inputs: [
+            { name: 'name',     type: 'string',  indexed: false },
+            { name: 'admin',    type: 'address', indexed: false },
+            { name: 'registry', type: 'address', indexed: false },
+        ],
+    },
+] as const
 
 interface ChainEntry {
     chain_id: number
@@ -58,12 +90,20 @@ function getWagmiConfig() {
     const alchemyKey = (window as any).__ALCHEMY_KEY__
     const rpcUrl = alchemyKey ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}` : 'https://cloudflare-eth.com'
     return createConfig({
-        chains: [mainnet],
+        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll],
         connectors: connectorsForWallets(
             [{ groupName: 'Popular', wallets: [injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet] }],
             { appName: 'ENSub', projectId }
         ),
-        transports: { [mainnet.id]: http(rpcUrl) },
+        transports: {
+            [mainnet.id]:  http(rpcUrl),
+            [base.id]:     http(),
+            [optimism.id]: http(),
+            [arbitrum.id]: http(),
+            [polygon.id]:  http(),
+            [linea.id]:    http(),
+            [scroll.id]:   http(),
+        },
         ssr: false,
     })
 }
@@ -102,6 +142,9 @@ const labelStyle = {
 
 function ManageContent({ tenant }: { tenant: TenantData }) {
     const { address, isConnected } = useAccount()
+    const { writeContractAsync } = useWriteContract()
+    const { switchChain } = useSwitchChain()
+    const currentChainId = useChainId()
     const accent = tenant.accent_color
 
     const [form, setForm] = useState({
@@ -182,6 +225,37 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const handleRemoveChain = async (chainId: number) => {
         await fetch(`/api/manage/${tenant.slug}/chains/${chainId}`, { method: 'DELETE' })
         setChains(prev => prev.filter(c => c.chain_id !== chainId))
+    }
+
+    const handleDeployRegistry = async () => {
+        setChainSaving(true)
+        setChainError('')
+        try {
+            if (currentChainId !== newChainId) {
+                await switchChain({ chainId: newChainId })
+            }
+            const txHash = await writeContractAsync({
+                address: FACTORY_ADDRESS,
+                abi: FACTORY_ABI,
+                functionName: 'deployRegistry',
+                args: [tenant.ens_domain],
+                chainId: newChainId,
+            })
+            const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: newChainId })
+            for (const log of receipt.logs) {
+                try {
+                    const decoded = decodeEventLog({ abi: FACTORY_ABI, data: log.data, topics: log.topics as any })
+                    if (decoded.eventName === 'RegistryDeployed') {
+                        setNewRegistry((decoded.args as any).registry as string)
+                        break
+                    }
+                } catch {}
+            }
+        } catch (e: any) {
+            setChainError(e.shortMessage ?? e.message ?? 'Deploy failed')
+        } finally {
+            setChainSaving(false)
+        }
     }
 
     const isOwner = isConnected && address?.toLowerCase() === tenant.owner_address.toLowerCase()
@@ -645,33 +719,59 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                             {/* Add chain form */}
                             {addingChain && (
-                                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {/* Chain selector */}
                                     <select
                                         value={newChainId}
-                                        onChange={e => setNewChainId(Number(e.target.value))}
+                                        onChange={e => { setNewChainId(Number(e.target.value)); setNewRegistry('') }}
                                         style={{ ...inputStyle, cursor: 'pointer' }}>
                                         {DURIN_CHAINS.filter(c => !chains.find(ch => ch.chain_id === c.id)).map(c => (
                                             <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
                                         ))}
                                     </select>
-                                    <input
-                                        style={inputStyle}
-                                        placeholder="L2Registry address (0x...)"
-                                        value={newRegistry}
-                                        onChange={e => setNewRegistry(e.target.value)}
-                                    />
-                                    <input
-                                        style={inputStyle}
-                                        placeholder="L2Registrar address (0x...)"
-                                        value={newRegistrar}
-                                        onChange={e => setNewRegistrar(e.target.value)}
-                                    />
+
+                                    {/* Step 1 — L2Registry: auto-deploy via Durin factory */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            Step 1 — L2Registry
+                                        </span>
+                                        {newRegistry ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'rgba(0,200,80,0.08)', border: '1px solid rgba(0,200,80,0.25)', borderRadius: '8px' }}>
+                                                <span style={{ color: '#00c850', fontSize: '0.8rem' }}>✓ Deployed</span>
+                                                <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>{newRegistry}</span>
+                                                <button onClick={() => setNewRegistry('')} style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={handleDeployRegistry}
+                                                disabled={chainSaving}
+                                                style={{ padding: '9px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '8px', fontWeight: 'bold', fontSize: '0.82rem', cursor: chainSaving ? 'not-allowed' : 'pointer', textAlign: 'left' as const }}>
+                                                {chainSaving ? `⟳ Deploying on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}…` : `⚡ Deploy L2Registry on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}`}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Step 2 — L2Registrar: manual entry */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                            Step 2 — L2Registrar address
+                                            <a href="https://github.com/namestonehq/durin" target="_blank" rel="noreferrer" style={{ color: accent, marginLeft: '6px', fontSize: '0.72rem' }}>deploy via Durin →</a>
+                                        </span>
+                                        <input
+                                            style={inputStyle}
+                                            placeholder="0x… (L2Registrar contract)"
+                                            value={newRegistrar}
+                                            onChange={e => setNewRegistrar(e.target.value)}
+                                        />
+                                    </div>
+
                                     {chainError && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{chainError}</p>}
+
                                     <button
                                         onClick={handleAddChain}
-                                        disabled={chainSaving}
-                                        style={{ padding: '10px', background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, color: '#0a0a1a', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85rem', cursor: chainSaving ? 'not-allowed' : 'pointer' }}>
-                                        {chainSaving ? 'Adding...' : 'Add chain'}
+                                        disabled={chainSaving || !newRegistry || !newRegistrar}
+                                        style={{ padding: '10px', background: (newRegistry && newRegistrar) ? `linear-gradient(135deg, ${accent}, ${accent}cc)` : 'var(--row-bg)', color: (newRegistry && newRegistrar) ? '#0a0a1a' : 'var(--text-dim)', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85rem', cursor: (chainSaving || !newRegistry || !newRegistrar) ? 'not-allowed' : 'pointer' }}>
+                                        Save chain
                                     </button>
                                 </div>
                             )}
