@@ -52,13 +52,9 @@ class BillingController extends Controller
                 ],
             ],
         ];
-
-        // Only pass customer_email when there is no existing Stripe customer.
-        // If stripe_id is set, Cashier already passes `customer` and Stripe
-        // rejects having both `customer` and `customer_email` in the same call.
-        if (! $tenant->stripe_id) {
-            $checkoutParams['customer_email'] = $validated['email'];
-        }
+        // Do NOT pass customer_email here — Cashier's checkout() internally calls
+        // createOrGetStripeCustomer() which sets stripe_id and passes `customer`,
+        // and Stripe rejects requests that have both `customer` and `customer_email`.
 
         $checkout = $tenant
             ->newSubscription('default', $priceId)
