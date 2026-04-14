@@ -4,6 +4,7 @@ use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\TenantChainController;
 use App\Http\Controllers\Api\ClaimApiController;
+use App\Http\Controllers\Api\NftMetadataController;
 use App\Http\Controllers\Api\OnboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -45,6 +46,9 @@ Route::prefix('api/onboard')->group(function () {
     Route::get('namestone-message',  [OnboardController::class, 'namestoneMessage']);
     Route::post('namestone-enable',  [OnboardController::class, 'namestoneEnable']);
 });
+
+// NFT metadata (ERC721 tokenURI endpoint)
+Route::get('/nft/{slug}/{chainId}/{tokenId}', [NftMetadataController::class, 'show']);
 
 // Billing API
 Route::prefix('api/billing')->group(function () {

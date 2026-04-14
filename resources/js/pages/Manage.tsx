@@ -56,6 +56,13 @@ const REGISTRY_ABI = [
         inputs: [{ name: 'registrar', type: 'address' }],
         outputs: [],
     },
+    {
+        name: 'setBaseURI',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: 'baseURI', type: 'string' }],
+        outputs: [],
+    },
 ] as const
 
 const FACTORY_ABI = [
@@ -280,7 +287,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             const registrarAddr = deployReceipt.contractAddress
             if (!registrarAddr) throw new Error('No contract address in receipt')
 
-            setDeployStep('2/2 Authorizing…')
+            setDeployStep('2/3 Authorizing…')
             const authTxHash = await writeContractAsync({
                 address: ch.registry_address as `0x${string}`,
                 abi: REGISTRY_ABI,
@@ -289,6 +296,17 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 chainId: ch.chain_id,
             })
             await waitForTransactionReceipt(wagmiConfig, { hash: authTxHash, chainId: ch.chain_id })
+
+            setDeployStep('3/3 Setting metadata URI…')
+            const metaUri = `${window.location.origin}/nft/${tenant.slug}/${ch.chain_id}/`
+            const metaTxHash = await writeContractAsync({
+                address: ch.registry_address as `0x${string}`,
+                abi: REGISTRY_ABI,
+                functionName: 'setBaseURI',
+                args: [metaUri],
+                chainId: ch.chain_id,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: metaTxHash, chainId: ch.chain_id })
 
             // Persist the new registrar address
             await fetch(`/api/manage/${tenant.slug}/chains/${ch.chain_id}`, {
@@ -355,7 +373,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             if (!registrarAddr) throw new Error('Registrar deployment failed — no contract address')
 
             // Step 3: Authorize registrar on the registry
-            setDeployStep(`${newRegistry ? '2' : '3'}/${newRegistry ? '2' : '3'} Authorizing…`)
+            const totalSteps = newRegistry ? 2 : 3
+            setDeployStep(`${totalSteps - 1}/${totalSteps} Authorizing…`)
             const authTxHash = await writeContractAsync({
                 address: registryAddr as `0x${string}`,
                 abi: REGISTRY_ABI,
@@ -364,6 +383,18 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 chainId: newChainId,
             })
             await waitForTransactionReceipt(wagmiConfig, { hash: authTxHash, chainId: newChainId })
+
+            // Step 4: Set metadata base URI
+            setDeployStep(`${totalSteps}/${totalSteps} Setting metadata URI…`)
+            const metaUri = `${window.location.origin}/nft/${tenant.slug}/${newChainId}/`
+            const metaTxHash = await writeContractAsync({
+                address: registryAddr as `0x${string}`,
+                abi: REGISTRY_ABI,
+                functionName: 'setBaseURI',
+                args: [metaUri],
+                chainId: newChainId,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: metaTxHash, chainId: newChainId })
 
             setNewRegistrar(registrarAddr)
             setDeployStep('')
