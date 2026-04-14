@@ -96,17 +96,17 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
                 <div style={{ width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                     <div style={{ textAlign: 'center' }}>
-                        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                             Your subdomain
                         </h1>
-                        <p style={{ fontSize: '0.875rem', color: '#888' }}>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                             Look up your <span style={{ color: accent }}>*.{tenant.ens_domain}</span> name
                         </p>
                     </div>
 
                     {!isConnected && (
                         <div style={{ ...card }}>
-                            <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '20px' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px' }}>
                                 Connect your wallet to see your registered name
                             </p>
                             <ConnectButton />
@@ -115,14 +115,14 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
 
                     {isConnected && loading && (
                         <div style={{ ...card }}>
-                            <p style={{ color: '#888', fontSize: '0.875rem' }}>Looking up your name...</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Looking up your name...</p>
                         </div>
                     )}
 
                     {isConnected && checked && !loading && claimedName && (
                         <div style={{ ...card, borderColor: `${accent}44`, boxShadow: `0 0 30px ${accent}15` }}>
                             <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
-                            <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '4px' }}>You own</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>You own</p>
                             <p style={{
                                 color: accent, fontSize: '1.4rem', fontWeight: 'bold',
                                 margin: '8px 0 20px', textShadow: `0 0 20px ${accent}60`,
@@ -163,7 +163,7 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
                     {isConnected && checked && !loading && !claimedName && (
                         <div style={{ ...card }}>
                             <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔍</div>
-                            <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '20px' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '20px' }}>
                                 This wallet hasn't claimed a subdomain yet
                             </p>
                             <a

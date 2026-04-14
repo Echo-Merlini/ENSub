@@ -138,10 +138,10 @@ export default function Pricing({ slug }: Props) {
 
             <div style={{ flex: 1, padding: '64px 24px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
                 <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '10px' }}>
+                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '10px' }}>
                         Upgrade your plan
                     </h1>
-                    <p style={{ color: '#888', fontSize: '0.9rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                         More claims, more power, no badge.
                     </p>
                 </div>
@@ -158,7 +158,7 @@ export default function Pricing({ slug }: Props) {
                         marginLeft: 'auto',
                         marginRight: 'auto',
                     }}>
-                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '12px' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '12px' }}>
                             Enter the email for your billing receipt
                         </p>
                         <input
@@ -173,7 +173,7 @@ export default function Pricing({ slug }: Props) {
                                 border: '1.5px solid var(--input-border)',
                                 borderRadius: '10px',
                                 padding: '12px 16px',
-                                color: '#e4e4e4',
+                                color: 'var(--text)',
                                 fontSize: '0.95rem',
                                 outline: 'none',
                                 boxSizing: 'border-box',
@@ -204,7 +204,7 @@ export default function Pricing({ slug }: Props) {
                         padding: '32px',
                         opacity: 0.7,
                     }}>
-                        <h3 style={{ color: '#888', fontWeight: 'bold', marginBottom: '8px' }}>Free</h3>
+                        <h3 style={{ color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '8px' }}>Free</h3>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '24px' }}>
                             <span style={{ fontSize: '2.2rem', fontWeight: 'bold', color: '#666' }}>$0</span>
                         </div>
@@ -250,7 +250,7 @@ export default function Pricing({ slug }: Props) {
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '24px' }}>
                                 <span style={{
                                     fontSize: '2.2rem', fontWeight: 'bold',
-                                    color: plan.highlight ? ACCENT : '#e4e4e4',
+                                    color: plan.highlight ? ACCENT : 'var(--text)',
                                     textShadow: plan.highlight ? `0 0 20px ${ACCENT}60` : 'none',
                                 }}>
                                     {plan.price}

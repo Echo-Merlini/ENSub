@@ -97,7 +97,7 @@ function ShareBar({ tenant }: { tenant: Tenant }) {
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '7px 13px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 'bold',
         background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-        color: '#888', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
+        color: 'var(--text-muted)', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s',
     } as const
 
     return (
@@ -117,7 +117,7 @@ function ShareBar({ tenant }: { tenant: Tenant }) {
                 </svg>
                 Farcaster
             </a>
-            <button onClick={copyLink} style={{ ...btnStyle, color: copied ? '#00ff88' : '#888' }}>
+            <button onClick={copyLink} style={{ ...btnStyle, color: copied ? '#00ff88' : 'var(--text-muted)' }}>
                 {copied ? '✓ Copied' : '🔗 Copy link'}
             </button>
         </div>
@@ -204,7 +204,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             <div style={{ ...card, padding: '32px', textAlign: 'center' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔒</div>
                 <p style={{ color: accent, fontWeight: 'bold' }}>Claim limit reached</p>
-                <p style={{ color: '#888', fontSize: '0.875rem', marginTop: '8px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '8px' }}>
                     All {tenant.claim_limit} subdomains have been claimed.
                 </p>
             </div>
@@ -214,7 +214,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     if (!isConnected) {
         return (
             <div style={{ ...card, padding: '40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', textAlign: 'center' }}>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>Connect your wallet to claim</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Connect your wallet to claim</p>
                 <ConnectButton />
             </div>
         )
@@ -224,16 +224,16 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
         return (
             <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: `${accent}44` }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>You already claimed</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>You already claimed</p>
                 <p style={{ color: accent, fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>{claimedName}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
                     <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         View on ENS →
                     </a>
                     <span style={{ color: '#3a3a3a' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
-                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         My name page →
                     </a>
                 </div>
@@ -245,17 +245,17 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
         return (
             <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: `${accent}66`, boxShadow: `0 0 30px ${accent}20` }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>Successfully claimed!</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Successfully claimed!</p>
                 <p style={{ color: accent, fontSize: '1.4rem', fontWeight: 'bold', margin: '8px 0',
                     textShadow: `0 0 20px ${accent}` }}>{claimedName}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
                     <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         View on ENS →
                     </a>
                     <span style={{ color: '#3a3a3a' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
-                        style={{ color: '#888', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
                         Bookmark my name →
                     </a>
                 </div>
@@ -268,7 +268,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: 'rgba(255,68,68,0.3)' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🚫</div>
                 <p style={{ color: '#ff4444', fontWeight: 'bold' }}>Not eligible</p>
-                <p style={{ color: '#888', fontSize: '0.875rem', marginTop: '8px' }}>{message}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '8px' }}>{message}</p>
             </div>
         )
     }
@@ -276,7 +276,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     return (
         <div style={{ ...card, padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label style={{ fontSize: '0.85rem', color: '#888' }}>Choose your name</label>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Choose your name</label>
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     background: 'rgba(10,10,30,0.5)',
@@ -294,7 +294,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                         maxLength={32}
                         style={{
                             flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                            color: '#e4e4e4', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1rem', padding: 0,
+                            color: 'var(--text)', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '1rem', padding: 0,
                         }}
                     />
                     <span style={{ color: '#555', fontSize: '0.875rem', flexShrink: 0 }}>
@@ -376,10 +376,10 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                             <div style={{ width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                                 <div style={{ textAlign: 'center' }}>
-                                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                                         Claim your subdomain
                                     </h1>
-                                    <p style={{ fontSize: '0.875rem', color: '#888' }}>
+                                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                                         One free{' '}
                                         <span style={{ color: accent, textShadow: `0 0 8px ${accent}80` }}>
                                             *.{tenant.ens_domain}

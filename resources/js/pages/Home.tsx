@@ -145,7 +145,7 @@ function FAQ() {
 
     return (
         <section style={{ maxWidth: '680px', margin: '0 auto', padding: '0 24px' }}>
-            <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '40px' }}>
+            <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '40px' }}>
                 Frequently asked questions
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -166,7 +166,7 @@ function FAQ() {
                                 transform: open === i ? 'rotate(45deg)' : 'none' }}>+</span>
                         </div>
                         {open === i && (
-                            <p style={{ marginTop: '12px', color: '#888', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: 0 }}>
+                            <p style={{ marginTop: '12px', color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: 0 }}>
                                 {faq.a}
                             </p>
                         )}
@@ -199,8 +199,8 @@ export default function Home() {
                     ENSub
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                    <a href="#pricing" style={{ color: '#888', fontSize: '0.875rem', textDecoration: 'none' }}>Pricing</a>
-                    <a href="#how" style={{ color: '#888', fontSize: '0.875rem', textDecoration: 'none' }}>How it works</a>
+                    <a href="#pricing" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>Pricing</a>
+                    <a href="#how" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>How it works</a>
                     <button
                         onClick={() => setDark(d => !d)}
                         title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -259,7 +259,7 @@ export default function Home() {
                     <h1 style={{
                         fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
                         fontWeight: 'bold',
-                        color: '#e4e4e4',
+                        color: 'var(--text)',
                         lineHeight: 1.1,
                         marginBottom: '24px',
                     }}>
@@ -270,7 +270,7 @@ export default function Home() {
                         identity
                     </h1>
 
-                    <p style={{ fontSize: '1.1rem', color: '#888', maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.7 }}>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.7 }}>
                         ENSub lets any ENS domain owner launch a subdomain claim page in minutes.
                         Token-gate it, brand it, and share the link — no code, no gas.
                     </p>
@@ -289,7 +289,7 @@ export default function Home() {
 
             {/* How it works */}
             <section id="how" style={{ padding: '80px 24px', maxWidth: '1000px', margin: '0 auto' }}>
-                <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '56px' }}>
+                <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '56px' }}>
                     Up and running in 3 steps
                 </h2>
 
@@ -319,10 +319,10 @@ export default function Home() {
                             }}>
                                 {step.num}
                             </div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '10px' }}>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '10px' }}>
                                 {step.title}
                             </h3>
-                            <p style={{ color: '#888', fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
                                 {step.desc}
                             </p>
                         </div>
@@ -350,10 +350,10 @@ export default function Home() {
 
             {/* Pricing */}
             <section id="pricing" style={{ padding: '80px 24px', maxWidth: '1100px', margin: '0 auto' }}>
-                <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '12px' }}>
+                <h2 style={{ textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '12px' }}>
                     Simple, transparent pricing
                 </h2>
-                <p style={{ textAlign: 'center', color: '#888', fontSize: '0.9rem', marginBottom: '48px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '48px' }}>
                     Start free. Upgrade when you outgrow the limits.
                 </p>
 
@@ -386,7 +386,7 @@ export default function Home() {
                                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                                     <span style={{
                                         fontSize: '2.5rem', fontWeight: 'bold',
-                                        color: plan.highlight ? ACCENT : '#e4e4e4',
+                                        color: plan.highlight ? ACCENT : 'var(--text)',
                                         textShadow: plan.highlight ? `0 0 20px ${ACCENT}60` : 'none',
                                     }}>
                                         {plan.price}
@@ -432,10 +432,10 @@ export default function Home() {
                     ...card(`${ACCENT}22`),
                     boxShadow: `0 0 60px ${ACCENT}14`,
                 }}>
-                    <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '12px' }}>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '12px' }}>
                         Ready to go live?
                     </h2>
-                    <p style={{ color: '#888', marginBottom: '28px', lineHeight: 1.6 }}>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '28px', lineHeight: 1.6 }}>
                         Your community deserves a real on-chain identity. Set it up in under 5 minutes.
                     </p>
                     <a href="/start" style={btnPrimary}>Launch your subdomain page →</a>

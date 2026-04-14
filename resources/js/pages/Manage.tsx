@@ -449,7 +449,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         </a>
                                         <button
                                             onClick={() => { navigator.clipboard.writeText(claimUrl); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}
-                                            style={{ ...btnStyle, color: linkCopied ? '#00ff88' : '#888' }}>
+                                            style={{ ...btnStyle, color: linkCopied ? '#00ff88' : 'var(--text-muted)' }}>
                                             {linkCopied ? '✓ Copied' : '🔗 Copy link'}
                                         </button>
                                     </div>

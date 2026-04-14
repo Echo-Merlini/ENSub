@@ -37,9 +37,9 @@ html.light {
     --bg-primary:   #f0f2f5;
     --bg-secondary: #e2e8f0;
     --border:       rgba(0, 0, 0, 0.08);
-    --text:         #111827;
-    --text-muted:   #374151;
-    --text-dim:     #4b5563;
+    --text:         #717371;
+    --text-muted:   #888;
+    --text-dim:     #aaa;
     --card-bg:      #ffffff;
     --card-border:  rgba(0, 0, 0, 0.1);
     --input-bg:     #ffffff;

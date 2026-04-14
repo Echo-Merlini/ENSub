@@ -66,7 +66,7 @@ const input = {
     border: '1.5px solid var(--input-border)',
     borderRadius: '10px',
     padding: '12px 16px',
-    color: '#e4e4e4',
+    color: 'var(--text)',
     fontFamily: "'Inter', system-ui, sans-serif",
     fontSize: '0.95rem',
     outline: 'none',
@@ -77,7 +77,7 @@ const input = {
 const label = {
     display: 'block',
     fontSize: '0.8rem',
-    color: '#888',
+    color: 'var(--text-muted)',
     marginBottom: '6px',
     letterSpacing: '0.05em',
 } as const
@@ -150,10 +150,10 @@ function Step1({ onDone }: { onDone: () => void }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     Verify your wallet
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     Sign a message to prove ownership — no gas required
                 </p>
             </div>
@@ -171,7 +171,7 @@ function Step1({ onDone }: { onDone: () => void }) {
                         borderRadius: '10px',
                         padding: '14px 18px',
                         fontSize: '0.875rem',
-                        color: '#888',
+                        color: 'var(--text-muted)',
                     }}>
                         <span style={{ color: '#555' }}>Connected: </span>
                         <span style={{ color: ACCENT, fontFamily: 'monospace' }}>
@@ -247,10 +247,10 @@ function Step2({ onDone }: { onDone: (ensDomain: string) => void }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     Your ENS domain
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     We'll verify on-chain that your wallet owns it
                 </p>
             </div>
@@ -357,10 +357,10 @@ function Step3({ onDone }: { onDone: (config: GateConfig) => void }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     Set eligibility
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     Who can claim a subdomain under your ENS?
                 </p>
             </div>
@@ -506,7 +506,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
     if (resolverLoading) {
         return (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>⟳ Checking resolver…</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>⟳ Checking resolver…</p>
             </div>
         )
     }
@@ -514,10 +514,10 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     Set resolver
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     One-time transaction to point <span style={{ color: ACCENT }}>{ensDomain}</span> at Namestone's resolver
                 </p>
             </div>
@@ -535,7 +535,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <span style={{ color: '#555' }}>Current resolver</span>
-                    <span style={{ color: '#888', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>
                         {currentResolver ? `${currentResolver.slice(0, 6)}…${currentResolver.slice(-4)}` : 'none'}
                     </span>
                 </div>
@@ -550,7 +550,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
             {txHash && !confirmed && (
                 <div style={{
                     background: 'rgba(0,255,136,0.05)', border: `1px solid ${ACCENT}33`,
-                    borderRadius: '8px', padding: '12px 16px', fontSize: '0.82rem', color: '#888',
+                    borderRadius: '8px', padding: '12px 16px', fontSize: '0.82rem', color: 'var(--text-muted)',
                     display: 'flex', alignItems: 'center', gap: '8px',
                 }}>
                     <span>⟳</span>
@@ -638,10 +638,10 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     Brand your page
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     This is what claimants will see at <span style={{ color: ACCENT }}>ensub.org/claim/…</span>
                 </p>
             </div>
@@ -888,7 +888,7 @@ function Step5({
         return (
             <div style={{ textAlign: 'center', padding: '48px 0' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⟳</div>
-                <p style={{ color: '#888' }}>Creating your subdomain manager…</p>
+                <p style={{ color: 'var(--text-muted)' }}>Creating your subdomain manager…</p>
             </div>
         )
     }
@@ -898,7 +898,7 @@ function Step5({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'center' }}>
                 <div style={{ fontSize: '2rem' }}>⚠️</div>
                 <p style={{ color: '#ff4444', fontWeight: 'bold' }}>Something went wrong</p>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>{error}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{error}</p>
                 <button style={btnPrimary()} onClick={onReset}>START OVER</button>
             </div>
         )
@@ -911,21 +911,21 @@ function Step5({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
                 <div>
                     <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                         Page created!
                     </h2>
-                    <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                         One last step — set up your <span style={{ color: ACCENT }}>{planLabel}</span> subscription
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
-                    <label style={{ fontSize: '0.8rem', color: '#888' }}>Billing email</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Billing email</label>
                     <input
                         style={{
                             width: '100%', background: 'var(--input-bg)',
                             border: '1.5px solid var(--input-border)', borderRadius: '8px',
-                            padding: '11px 14px', color: '#e4e4e4',
+                            padding: '11px 14px', color: 'var(--text)',
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: '0.9rem',
                             outline: 'none', boxSizing: 'border-box' as const,
                         }}
@@ -963,10 +963,10 @@ function Step5({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
             <div>
                 <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#e4e4e4', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                     You're live!
                 </h2>
-                <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                     Your subdomain manager is ready
                 </p>
             </div>
@@ -1011,7 +1011,7 @@ function Step5({
                     style={{
                         ...btnPrimary(),
                         background: 'rgba(255,255,255,0.06)',
-                        color: '#888',
+                        color: 'var(--text-muted)',
                         boxShadow: 'none',
                     }}
                     onClick={() => {
@@ -1030,7 +1030,7 @@ function Step5({
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '8px',
-                    color: '#888', fontSize: '0.85rem',
+                    color: 'var(--text-muted)', fontSize: '0.85rem',
                     textDecoration: 'none',
                 }}
             >
