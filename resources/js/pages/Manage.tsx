@@ -1053,10 +1053,18 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '6px' }}>
                                         Step 1 — Set ENS Resolver
                                     </p>
-                                    <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '8px', lineHeight: '1.5' }}>
+                                    <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '10px', lineHeight: '1.5' }}>
                                         Change the resolver for <code style={{ color: accent, fontSize: '0.75rem' }}>{tenant.ens_domain}</code> to the Durin L1Resolver on Ethereum mainnet.
                                         Skip this if you already did it.
                                     </p>
+                                    <div style={{ display: 'flex', gap: '10px', padding: '10px 12px', borderRadius: '7px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)', marginBottom: '12px' }}>
+                                        <span style={{ fontSize: '0.85rem', flexShrink: 0 }}>⚠️</span>
+                                        <p style={{ color: '#f59e0b', fontSize: '0.76rem', lineHeight: '1.55', margin: 0 }}>
+                                            <strong>This disables Namestone offchain resolution.</strong> Claimants who only did the gasless
+                                            "Ξ ETH" claim and have not minted on any L2 chain will stop resolving in wallets and dApps.
+                                            Ensure your claimants have minted on at least one L2 chain before switching.
+                                        </p>
+                                    </div>
                                     <code style={{ display: 'block', fontSize: '0.72rem', color: COLORS.dim, fontFamily: "'Fira Code', monospace", marginBottom: '10px', wordBreak: 'break-all' as const }}>
                                         {L1_RESOLVER_ADDRESS}
                                     </code>
