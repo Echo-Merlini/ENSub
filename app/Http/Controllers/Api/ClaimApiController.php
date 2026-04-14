@@ -82,10 +82,10 @@ class ClaimApiController extends Controller
         $tenant = $this->getTenant($slug);
         if (! $tenant) return $this->notFound();
 
-        $address  = strtolower(trim($request->input('address', '')));
-        $name     = strtolower(trim($request->input('name', '')));
-        $chainId  = (int) $request->input('chain_id', 0);
-        $txHash   = $request->input('tx_hash', null);
+        $address = strtolower(trim($request->input('address', '')));
+        $name    = strtolower(trim($request->input('name', '')));
+        $chainId = (int) $request->input('chain_id', 0);
+        $txHash  = $request->input('tx_hash', null);
 
         if (! $address || ! $name || ! $chainId) {
             return response()->json(['error' => 'Missing address, name, or chain_id'], 400);
@@ -97,15 +97,18 @@ class ClaimApiController extends Controller
 
         $full = "{$name}.{$tenant->ens_domain}";
 
-        // Upsert: create the claim record if it doesn't exist yet (L2-only path)
-        Claim::firstOrCreate(
+        // Find or create the claim record (L2-only path if no offchain claim exists)
+        $claim = Claim::firstOrCreate(
             ['tenant_id' => $tenant->id, 'wallet_address' => $address],
-            [
-                'subdomain'  => $name,
-                'full_name'  => $full,
-                'tx_hash'    => $txHash,
-            ]
+            ['subdomain' => $name, 'full_name' => $full, 'tx_hash' => $txHash]
         );
+
+        // Track which L2 chains this wallet has minted on
+        $minted = $claim->minted_chains ?? [];
+        if (! in_array($chainId, $minted)) {
+            $claim->minted_chains = array_values(array_unique([...$minted, $chainId]));
+            $claim->save();
+        }
 
         return response()->json(['success' => true, 'full_name' => $full]);
     }

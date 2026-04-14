@@ -85,6 +85,7 @@ class ClaimController extends Controller
                     'subdomain'      => $c->subdomain,
                     'full_name'      => $c->full_name,
                     'claimed_at'     => $c->created_at->toDateTimeString(),
+                    'minted_chains'  => $c->minted_chains ?? [],
                 ])->values()->toArray(),
                 'chains' => $tenant->chains()->where('enabled', true)->orderBy('chain_id')->get()->map(fn($ch) => [
                     'chain_id'          => $ch->chain_id,

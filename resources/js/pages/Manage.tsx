@@ -91,6 +91,7 @@ interface ClaimEntry {
     subdomain: string
     full_name: string
     claimed_at: string
+    minted_chains: number[]
 }
 
 interface TenantData {
@@ -651,17 +652,28 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             border: '1px solid var(--row-border)',
                                             gap: '12px',
                                         }}>
-                                            <div style={{ minWidth: 0 }}>
+                                            <div style={{ minWidth: 0, flex: 1 }}>
                                                 <p style={{ color: accent, fontSize: '0.875rem', fontWeight: 'bold',
                                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {c.full_name}
                                                 </p>
-                                                <p style={{ color: COLORS.dim, fontSize: '0.72rem', fontFamily: 'monospace', marginTop: '2px' }}>
-                                                    {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
-                                                    <span style={{ marginLeft: '8px', color: 'var(--text-dim)' }}>
-                                                        {new Date(c.claimed_at).toLocaleDateString()}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                                    <span style={{ fontSize: '0.7rem', color: '#00c850', background: 'rgba(0,200,80,0.1)', border: '1px solid rgba(0,200,80,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
+                                                        Ξ ETH
                                                     </span>
-                                                </p>
+                                                    {(c.minted_chains ?? []).map(cid => {
+                                                        const meta = DURIN_CHAINS.find(d => d.id === cid)
+                                                        return (
+                                                            <span key={cid} style={{ fontSize: '0.7rem', color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
+                                                                {meta?.icon ?? '🔗'} {meta?.name ?? `Chain ${cid}`}
+                                                            </span>
+                                                        )
+                                                    })}
+                                                    <span style={{ color: COLORS.dim, fontSize: '0.7rem', fontFamily: 'monospace' }}>
+                                                        {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
+                                                        <span style={{ marginLeft: '6px' }}>{new Date(c.claimed_at).toLocaleDateString()}</span>
+                                                    </span>
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={() => handleRevoke(c)}
@@ -800,7 +812,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                             {/* Offchain always-on row */}
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--row-border)' }}>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>⚡ Offchain (Namestone) — gasless</span>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>Ξ ETH — Gasless</span>
                                 <span style={{ fontSize: '0.75rem', color: '#00c850', background: 'rgba(0,200,80,0.12)', border: '1px solid rgba(0,200,80,0.25)', borderRadius: '4px', padding: '2px 8px' }}>Always on</span>
                             </div>
 
