@@ -199,8 +199,10 @@ export default function Home() {
                     ENSub
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                    <a href="#pricing" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>Pricing</a>
-                    <a href="#how" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>How it works</a>
+                    <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                        <a href="#pricing" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>Pricing</a>
+                        <a href="#how" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textDecoration: 'none' }}>How it works</a>
+                    </div>
                     <button
                         onClick={() => setDark(d => !d)}
                         title={dark ? 'Switch to light mode' : 'Switch to dark mode'}

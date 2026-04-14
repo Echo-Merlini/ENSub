@@ -98,3 +98,10 @@ html.vanta-enabled body {
 html.vanta-enabled {
     --bg-primary: transparent;
 }
+
+/* Hide desktop nav links on mobile so the header doesn't overflow */
+@media (max-width: 640px) {
+    .nav-links-desktop {
+        display: none !important;
+    }
+}
