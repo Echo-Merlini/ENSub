@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
-import { waitForTransactionReceipt } from '@wagmi/core'
+import { waitForTransactionReceipt, deployContract } from '@wagmi/core'
 import { decodeEventLog } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
@@ -27,6 +27,36 @@ const CHAIN_META: Record<number, { wagmiChain: any }> = {
 }
 
 const FACTORY_ADDRESS = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
+
+// Compiled L2Registrar bytecode (open registrar, free registration, no restrictions)
+// Source: src/examples/L2Registrar.sol from namestonehq/durin
+const L2_REGISTRAR_BYTECODE = '0x60e060405234801561000f575f80fd5b50604051610a57380380610a5783398101604081905261002e9161004e565b4660a081905263800000001760c0526001600160a01b031660805261007b565b5f6020828403121561005e575f80fd5b81516001600160a01b0381168114610074575f80fd5b9392505050565b60805160a05160c05161096f6100e85f395f8181607301526102b701525f60ec01525f818160ad015281816101340152818161016301528181610280015281816103230152818161038e015281816103bd015281816105200152818161054f0152610647015261096f5ff3fe608060405234801561000f575f80fd5b5060043610610055575f3560e01c80631e59c529146100595780631fe93ea81461006e5780637b103999146100a85780639a8a0592146100e7578063aeb8ce9b1461010e575b5f80fd5b61006c61006736600461072c565b610131565b005b6100957f000000000000000000000000000000000000000000000000000000000000000081565b6040519081526020015b60405180910390f35b6100cf7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200161009f565b6100957f000000000000000000000000000000000000000000000000000000000000000081565b61012161011c36600461077f565b61051c565b604051901515815260200161009f565b5f7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663b0c3ade47f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663ddf7fcb06040518163ffffffff1660e01b8152600401602060405180830381865afa1580156101bd573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906101e191906107be565b86866040518463ffffffff1660e01b8152600401610201939291906107fd565b602060405180830381865afa15801561021c573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061024091906107be565b60408051606085901b6bffffffffffffffffffffffff19166020820152815160148183030181526034820192839052638b95dd7160e01b909252919250907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690638b95dd71906102e19085907f0000000000000000000000000000000000000000000000000000000000000000908690603801610862565b5f604051808303815f87803b1580156102f8575f80fd5b505af115801561030a573d5f803e3d5ffd5b5050604051638b95dd7160e01b81526001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169250638b95dd71915061035f908590603c908690600401610862565b5f604051808303815f87803b158015610376575f80fd5b505af1158015610388573d5f803e3d5ffd5b505050507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316638bf9baba7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663ddf7fcb06040518163ffffffff1660e01b8152600401602060405180830381865afa158015610417573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061043b91906107be565b604080515f8082526020820190925289918991899161046a565b60608152602001906001900390816104555790505b506040518663ffffffff1660e01b815260040161048b959493929190610880565b6020604051808303815f875af11580156104a7573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906104cb91906107be565b50826001600160a01b031685856040516104e6929190610908565b604051908190038120907f1c6eac0e720ec22bb0653aec9c19985633a4fb07971cf973096c2f8e3c37c17f905f90a35050505050565b5f807f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663b0c3ade47f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031663ddf7fcb06040518163ffffffff1660e01b8152600401602060405180830381865afa1580156105a9573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906105cd91906107be565b86866040518463ffffffff1660e01b81526004016105ed939291906107fd565b602060405180830381865afa158015610608573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061062c91906107be565b6040516331a9108f60e11b81526004810182905290915081907f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690636352211e90602401602060405180830381865afa9250505080156106b2575060408051601f3d908101601f191682019092526106af91810190610917565b60015b6106c35750505060038110156106ca565b505f925050505b92915050565b5f8083601f8401126106e0575f80fd5b50813567ffffffffffffffff8111156106f7575f80fd5b60208301915083602082850101111561070e575f80fd5b9250929050565b6001600160a01b0381168114610729575f80fd5b50565b5f805f6040848603121561073e575f80fd5b833567ffffffffffffffff811115610754575f80fd5b610760868287016106d0565b909450925050602084013561077481610715565b809150509250925092565b5f8060208385031215610790575f80fd5b823567ffffffffffffffff8111156107a6575f80fd5b6107b2858286016106d0565b90969095509350505050565b5f602082840312156107ce575f80fd5b5051919050565b81835281816020850137505f828201602090810191909152601f909101601f19169091010190565b838152604060208201525f6108166040830184866107d5565b95945050505050565b5f81518084525f5b8181101561084357602081850181015186830182015201610827565b505f602082860101526020601f19601f83011685010191505092915050565b838152826020820152606060408201525f610816606083018461081f565b8581525f602060808184015261089a6080840187896107d5565b6001600160a01b03861660408501528381036060850152845180825282820190600581901b830184018488015f5b838110156108f657601f198684030185526108e483835161081f565b948701949250908601906001016108c8565b50909c9b505050505050505050505050565b818382375f9101908152919050565b5f60208284031215610927575f80fd5b815161093281610715565b939250505056fea2646970667358221220d362d3d6dd045e0ba3c3489a96de1a0c7fe074cd33379b1b6eb23011de70202a64736f6c63430008140033' as const
+
+const L2_REGISTRAR_ABI = [
+    {
+        name: 'constructor',
+        type: 'constructor',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: '_registry', type: 'address' }],
+    },
+    {
+        name: 'register',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: 'label', type: 'string' }, { name: 'owner', type: 'address' }],
+        outputs: [],
+    },
+] as const
+
+const REGISTRY_ABI = [
+    {
+        name: 'addRegistrar',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [{ name: 'registrar', type: 'address' }],
+        outputs: [],
+    },
+] as const
 
 const FACTORY_ABI = [
     {
@@ -175,6 +205,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [newRegistrar, setNewRegistrar] = useState('')
     const [chainSaving, setChainSaving] = useState(false)
     const [chainError, setChainError] = useState('')
+    const [deployStep, setDeployStep] = useState('')
 
     const handleAddChain = async () => {
         if (!newRegistry.trim() || !newRegistrar.trim()) {
@@ -230,31 +261,66 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const handleDeployRegistry = async () => {
         setChainSaving(true)
         setChainError('')
+        setDeployStep('')
         try {
             if (currentChainId !== newChainId) {
                 await switchChain({ chainId: newChainId })
             }
-            const txHash = await writeContractAsync({
-                address: FACTORY_ADDRESS,
-                abi: FACTORY_ABI,
-                functionName: 'deployRegistry',
-                args: [tenant.ens_domain],
+
+            let registryAddr = newRegistry.trim()
+
+            if (!registryAddr) {
+                // Step 1: Deploy L2Registry via factory
+                setDeployStep('1/3 Deploying registry…')
+                const txHash = await writeContractAsync({
+                    address: FACTORY_ADDRESS,
+                    abi: FACTORY_ABI,
+                    functionName: 'deployRegistry',
+                    args: [tenant.ens_domain],
+                    chainId: newChainId,
+                })
+                const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: newChainId })
+                for (const log of receipt.logs) {
+                    try {
+                        const decoded = decodeEventLog({ abi: FACTORY_ABI, data: log.data, topics: log.topics as any })
+                        if (decoded.eventName === 'RegistryDeployed') {
+                            registryAddr = (decoded.args as any).registry as string
+                            break
+                        }
+                    } catch {}
+                }
+                if (!registryAddr) throw new Error('Could not find RegistryDeployed event')
+                setNewRegistry(registryAddr)
+            }
+
+            // Step 2: Deploy L2Registrar (open, free) pointing at the registry
+            setDeployStep(`${newRegistry ? '1' : '2'}/2 Deploying registrar…`)
+            const deployTxHash = await deployContract(wagmiConfig, {
+                abi: L2_REGISTRAR_ABI,
+                bytecode: L2_REGISTRAR_BYTECODE,
+                args: [registryAddr as `0x${string}`],
                 chainId: newChainId,
             })
-            const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: newChainId })
-            for (const log of receipt.logs) {
-                try {
-                    const decoded = decodeEventLog({ abi: FACTORY_ABI, data: log.data, topics: log.topics as any })
-                    if (decoded.eventName === 'RegistryDeployed') {
-                        const registryAddr = (decoded.args as any).registry as string
-                        setNewRegistry(registryAddr)
-                        setNewRegistrar(registryAddr) // default: registry acts as registrar
-                        break
-                    }
-                } catch {}
-            }
+            const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: newChainId })
+            const registrarAddr = deployReceipt.contractAddress
+            if (!registrarAddr) throw new Error('Registrar deployment failed — no contract address')
+
+            // Step 3: Authorize registrar on the registry
+            setDeployStep(`${newRegistry ? '2' : '3'}/${newRegistry ? '2' : '3'} Authorizing…`)
+            const authTxHash = await writeContractAsync({
+                address: registryAddr as `0x${string}`,
+                abi: REGISTRY_ABI,
+                functionName: 'addRegistrar',
+                args: [registrarAddr],
+                chainId: newChainId,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: authTxHash, chainId: newChainId })
+
+            setNewRegistrar(registrarAddr)
+            setDeployStep('')
         } catch (e: any) {
             setChainError(e.shortMessage ?? e.message ?? 'Deploy failed')
+            setDeployStep('')
         } finally {
             setChainSaving(false)
         }
@@ -732,40 +798,44 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         ))}
                                     </select>
 
-                                    {/* Step 1 — L2Registry: auto-deploy via Durin factory */}
+                                    {/* L2Registry address — paste existing or leave blank to deploy fresh */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                            Step 1 — L2Registry
-                                        </span>
-                                        {newRegistry ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: 'rgba(0,200,80,0.08)', border: '1px solid rgba(0,200,80,0.25)', borderRadius: '8px' }}>
-                                                <span style={{ color: '#00c850', fontSize: '0.8rem' }}>✓ Deployed</span>
-                                                <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>{newRegistry}</span>
-                                                <button onClick={() => setNewRegistry('')} style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>✕</button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={handleDeployRegistry}
-                                                disabled={chainSaving}
-                                                style={{ padding: '9px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '8px', fontWeight: 'bold', fontSize: '0.82rem', cursor: chainSaving ? 'not-allowed' : 'pointer', textAlign: 'left' as const }}>
-                                                {chainSaving ? `⟳ Deploying on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}…` : `⚡ Deploy L2Registry on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}`}
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Step 2 — L2Registrar: manual entry */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                            Step 2 — L2Registrar address
-                                            <a href="https://github.com/namestonehq/durin" target="_blank" rel="noreferrer" style={{ color: accent, marginLeft: '6px', fontSize: '0.72rem' }}>deploy via Durin →</a>
+                                            L2Registry address
+                                            <span style={{ color: 'var(--text-dim)', fontWeight: 'normal', marginLeft: '6px' }}>(leave blank to deploy new)</span>
                                         </span>
                                         <input
                                             style={inputStyle}
-                                            placeholder="0x… (L2Registrar contract)"
+                                            placeholder="0x… or leave blank to deploy"
+                                            value={newRegistry}
+                                            onChange={e => setNewRegistry(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* Registrar address — auto-filled after deploy, or paste existing */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>L2Registrar address</span>
+                                        <input
+                                            style={{ ...inputStyle, color: newRegistrar ? 'var(--text)' : 'var(--text-dim)' }}
+                                            placeholder="Auto-filled after deploy below"
                                             value={newRegistrar}
                                             onChange={e => setNewRegistrar(e.target.value)}
                                         />
                                     </div>
+
+                                    {/* Deploy button */}
+                                    <button
+                                        onClick={handleDeployRegistry}
+                                        disabled={chainSaving || !!newRegistrar}
+                                        style={{ padding: '9px 14px', background: newRegistrar ? 'var(--row-bg)' : `${accent}18`, border: `1px solid ${newRegistrar ? 'var(--card-border)' : accent + '44'}`, color: newRegistrar ? 'var(--text-dim)' : accent, borderRadius: '8px', fontWeight: 'bold', fontSize: '0.82rem', cursor: (chainSaving || !!newRegistrar) ? 'not-allowed' : 'pointer', textAlign: 'left' as const }}>
+                                        {chainSaving
+                                            ? `⟳ ${deployStep || 'Deploying…'}`
+                                            : newRegistrar
+                                                ? `✓ Registrar ready`
+                                                : newRegistry
+                                                    ? `⚡ Deploy Registrar on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}`
+                                                    : `⚡ Deploy Registry + Registrar on ${DURIN_CHAINS.find(c => c.id === newChainId)?.name}`}
+                                    </button>
 
                                     {chainError && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{chainError}</p>}
 
