@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
 import { waitForTransactionReceipt, deployContract } from '@wagmi/core'
-import { decodeEventLog } from 'viem'
+import { decodeEventLog, namehash } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
@@ -26,7 +26,36 @@ const CHAIN_META: Record<number, { wagmiChain: any }> = {
     534352: { wagmiChain: scroll   },
 }
 
-const FACTORY_ADDRESS = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
+const FACTORY_ADDRESS    = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
+const L1_RESOLVER_ADDRESS = '0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61' as const
+const ENS_REGISTRY_ADDRESS = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e' as const
+
+const L1_RESOLVER_ABI = [
+    {
+        name: 'setL2Registry',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: 'node',            type: 'bytes32' },
+            { name: 'chainId',         type: 'uint64'  },
+            { name: 'registryAddress', type: 'address' },
+        ],
+        outputs: [],
+    },
+] as const
+
+const ENS_REGISTRY_ABI = [
+    {
+        name: 'setResolver',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: 'node',     type: 'bytes32' },
+            { name: 'resolver', type: 'address' },
+        ],
+        outputs: [],
+    },
+] as const
 
 // Compiled L2Registrar bytecode (open registrar, free registration, no restrictions)
 // Source: src/examples/L2Registrar.sol from namestonehq/durin
@@ -214,6 +243,11 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [chainSaving, setChainSaving] = useState(false)
     const [chainError, setChainError] = useState('')
     const [deployStep, setDeployStep] = useState('')
+
+    // Phase 2: ENS on-chain resolution
+    const [ensResolutionSaving, setEnsResolutionSaving] = useState(false)
+    const [ensResolutionStep, setEnsResolutionStep] = useState('')
+    const [ensResolutionError, setEnsResolutionError] = useState('')
 
     const handleAddChain = async () => {
         if (!newRegistry.trim() || !newRegistrar.trim()) {
@@ -403,6 +437,62 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             setDeployStep('')
         } finally {
             setChainSaving(false)
+        }
+    }
+
+    // Phase 2: set ENS resolver to L1Resolver on mainnet
+    const handleSetResolver = async () => {
+        setEnsResolutionSaving(true)
+        setEnsResolutionError('')
+        setEnsResolutionStep('')
+        try {
+            if (currentChainId !== mainnet.id) {
+                await switchChain({ chainId: mainnet.id })
+            }
+            setEnsResolutionStep('Setting resolver on mainnet…')
+            const node = namehash(tenant.ens_domain)
+            const txHash = await writeContractAsync({
+                address: ENS_REGISTRY_ADDRESS,
+                abi: ENS_REGISTRY_ABI,
+                functionName: 'setResolver',
+                args: [node, L1_RESOLVER_ADDRESS],
+                chainId: mainnet.id,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: mainnet.id })
+            setEnsResolutionStep('')
+        } catch (e: any) {
+            setEnsResolutionError(e.shortMessage ?? e.message ?? 'Failed to set resolver')
+            setEnsResolutionStep('')
+        } finally {
+            setEnsResolutionSaving(false)
+        }
+    }
+
+    // Phase 2: register L2Registry with L1Resolver on mainnet for a specific chain
+    const handleSetL2Registry = async (ch: ChainEntry) => {
+        setEnsResolutionSaving(true)
+        setEnsResolutionError('')
+        setEnsResolutionStep('')
+        try {
+            if (currentChainId !== mainnet.id) {
+                await switchChain({ chainId: mainnet.id })
+            }
+            setEnsResolutionStep(`Registering ${ch.chain_name} on mainnet…`)
+            const node = namehash(tenant.ens_domain)
+            const txHash = await writeContractAsync({
+                address: L1_RESOLVER_ADDRESS,
+                abi: L1_RESOLVER_ABI,
+                functionName: 'setL2Registry',
+                args: [node, BigInt(ch.chain_id), ch.registry_address as `0x${string}`],
+                chainId: mainnet.id,
+            })
+            await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: mainnet.id })
+            setEnsResolutionStep('')
+        } catch (e: any) {
+            setEnsResolutionError(e.shortMessage ?? e.message ?? 'Failed to register L2 registry')
+            setEnsResolutionStep('')
+        } finally {
+            setEnsResolutionSaving(false)
         }
     }
 
@@ -946,6 +1036,90 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                 </div>
                             )}
                         </div>
+
+                        {/* ENS On-chain Resolution (Phase 2) */}
+                        {chains.length > 0 && (
+                            <div style={{ ...card, marginTop: '8px' }}>
+                                <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                                    ENS On-chain Resolution
+                                </h2>
+                                <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '16px', lineHeight: '1.55' }}>
+                                    Allow <strong style={{ color: COLORS.text }}>*.{tenant.ens_domain}</strong> subdomains to resolve on-chain (wallets, dApps, viem).
+                                    Requires two Ethereum mainnet steps — switch resolver once, then register each L2 chain.
+                                </p>
+
+                                {/* Step 1 — update resolver */}
+                                <div style={{ marginBottom: '12px', padding: '14px', borderRadius: '8px', background: 'var(--row-bg)', border: '1px solid var(--row-border)' }}>
+                                    <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '6px' }}>
+                                        Step 1 — Set ENS Resolver
+                                    </p>
+                                    <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '8px', lineHeight: '1.5' }}>
+                                        Change the resolver for <code style={{ color: accent, fontSize: '0.75rem' }}>{tenant.ens_domain}</code> to the Durin L1Resolver on Ethereum mainnet.
+                                        Skip this if you already did it.
+                                    </p>
+                                    <code style={{ display: 'block', fontSize: '0.72rem', color: COLORS.dim, fontFamily: "'Fira Code', monospace", marginBottom: '10px', wordBreak: 'break-all' as const }}>
+                                        {L1_RESOLVER_ADDRESS}
+                                    </code>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+                                        <button
+                                            onClick={handleSetResolver}
+                                            disabled={ensResolutionSaving}
+                                            style={{ padding: '7px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1 }}>
+                                            {ensResolutionSaving && ensResolutionStep.includes('resolver') ? `⟳ ${ensResolutionStep}` : 'Set resolver (mainnet tx)'}
+                                        </button>
+                                        <a href={`https://app.ens.domains/${tenant.ens_domain}`} target="_blank" rel="noreferrer"
+                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--row-border)', color: COLORS.muted, borderRadius: '6px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                                            Or use ENS app ↗
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {/* Step 2 — register each L2 registry */}
+                                <div style={{ padding: '14px', borderRadius: '8px', background: 'var(--row-bg)', border: '1px solid var(--row-border)' }}>
+                                    <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '6px' }}>
+                                        Step 2 — Register L2 Registries
+                                    </p>
+                                    <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '12px', lineHeight: '1.5' }}>
+                                        Tell the L1Resolver which registry contract handles subdomain lookups on each chain.
+                                        One mainnet tx per chain.
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {chains.filter(ch => ch.registry_address).map(ch => {
+                                            const meta = DURIN_CHAINS.find(c => c.id === ch.chain_id)
+                                            const isActive = ensResolutionSaving && ensResolutionStep.includes(ch.chain_name)
+                                            return (
+                                                <div key={ch.chain_id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{ fontSize: '0.82rem', color: COLORS.text, flex: 1 }}>
+                                                        {meta?.icon} {ch.chain_name}
+                                                    </span>
+                                                    <code style={{ fontSize: '0.68rem', color: COLORS.dim, fontFamily: 'monospace', flex: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                                        {ch.registry_address}
+                                                    </code>
+                                                    <button
+                                                        onClick={() => handleSetL2Registry(ch)}
+                                                        disabled={ensResolutionSaving}
+                                                        style={{ padding: '5px 12px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const, opacity: ensResolutionSaving ? 0.6 : 1, flexShrink: 0 }}>
+                                                        {isActive ? `⟳ ${ensResolutionStep}` : 'Register'}
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
+                                        {chains.filter(ch => ch.registry_address).length === 0 && (
+                                            <p style={{ fontSize: '0.78rem', color: COLORS.dim, margin: 0 }}>
+                                                No chains with deployed registries yet. Add and deploy a chain above first.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {ensResolutionError && (
+                                    <p style={{ color: '#ff4444', fontSize: '0.8rem', marginTop: '10px', marginBottom: 0 }}>{ensResolutionError}</p>
+                                )}
+                                {ensResolutionStep && !ensResolutionError && (
+                                    <p style={{ color: accent, fontSize: '0.8rem', marginTop: '10px', marginBottom: 0 }}>⟳ {ensResolutionStep}</p>
+                                )}
+                            </div>
+                        )}
 
                         {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
 
