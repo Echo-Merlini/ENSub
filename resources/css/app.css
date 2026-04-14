@@ -40,7 +40,7 @@ html.light {
     --text:         #111827;
     --text-muted:   #374151;
     --text-dim:     #4b5563;
-    --card-bg:      rgba(255, 255, 255, 0.9);
+    --card-bg:      #ffffff;
     --card-border:  rgba(0, 0, 0, 0.1);
     --input-bg:     #ffffff;
     --input-border: rgba(0, 0, 0, 0.15);
