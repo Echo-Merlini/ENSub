@@ -7,6 +7,8 @@
         <script>
             window.__WALLETCONNECT_PROJECT_ID__ = "{{ env('WALLETCONNECT_PROJECT_ID', '') }}";
             window.__ALCHEMY_KEY__ = "{{ env('ALCHEMY_KEY', '') }}";
+            // Apply theme before render to avoid flash
+            (function(){try{if(localStorage.getItem('theme')==='light'){document.documentElement.classList.add('light');}}catch(e){}})();
         </script>
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])

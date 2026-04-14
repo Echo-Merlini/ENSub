@@ -20,24 +20,26 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Light mode — toggled by adding .light to <html> */
+/* ── Light mode ─────────────────────────────────────────────────────────────
+   Toggled by adding .light to <html>. Persisted via localStorage('theme').
+   ──────────────────────────────────────────────────────────────────────── */
 html.light {
     --bg-primary:   #f0f2f5;
     --bg-secondary: #e2e8f0;
     --border:       rgba(0, 0, 0, 0.08);
     --text:         #0f1117;
-    --text-muted:   #4b5563;
+    --text-muted:   #374151;
 }
 
-/* Flip the dark inline-style surfaces when in light mode */
 html.light body {
     background: var(--bg-primary);
     color: var(--text);
 }
 
+/* Nav / header bars */
 html.light nav,
 html.light header {
-    background: rgba(240, 242, 245, 0.9) !important;
+    background: rgba(240, 242, 245, 0.92) !important;
     border-bottom-color: rgba(0, 0, 0, 0.08) !important;
 }
 
@@ -45,38 +47,70 @@ html.light main {
     background: var(--bg-primary);
 }
 
-/* Cards — the rgba(22,33,62,…) surfaces */
+/* ── Card surfaces (all rgba(22,33,62 … variants) ── */
 html.light [style*="rgba(22,33,62"],
-html.light [style*="rgba(22, 33, 62"] {
-    background: rgba(255, 255, 255, 0.8) !important;
+html.light [style*="rgba(22, 33, 62"],
+html.light [style*="background: rgba(22"] {
+    background: rgba(255, 255, 255, 0.85) !important;
     border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Muted text */
+/* Darker section backgrounds used in Onboard / Claim */
+html.light [style*="background: #0a0a1a"],
+html.light [style*="background: #0f1117"],
+html.light [style*="background: rgba(10,10"] {
+    background: #f0f2f5 !important;
+}
+
+/* Inputs */
+html.light input,
+html.light textarea,
+html.light select,
+html.light [style*="background: rgba(10,12"],
+html.light [style*="background: rgba(10, 12"],
+html.light [style*="background: rgba(15,17"],
+html.light [style*="background: rgba(15, 17"] {
+    background: #fff !important;
+    color: #0f1117 !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ── Text — darker greys for readability ── */
 html.light [style*="color: #888"],
-html.light [style*="color: #555"],
+html.light [style*="color: #777"],
 html.light [style*="color: #666"],
+html.light [style*="color: #555"],
+html.light [style*="color: #444"] {
+    color: #374151 !important;
+}
+
 html.light [style*="color: #aaa"],
+html.light [style*="color: #999"],
+html.light [style*="color: #bbb"],
 html.light [style*="color: #ccc"] {
     color: #4b5563 !important;
 }
 
 html.light [style*="color: #e4e4e4"],
-html.light [style*="color: #ddd"] {
-    color: #0f1117 !important;
+html.light [style*="color: #ddd"],
+html.light [style*="color: #d0d0d0"] {
+    color: #111827 !important;
 }
 
-/* Nav links */
-html.light nav a[style*="color: #888"] {
-    color: #4b5563 !important;
-}
-
-/* Footer */
+/* Footer / ultra-muted text */
 html.light footer {
     border-top-color: rgba(0, 0, 0, 0.08) !important;
 }
-html.light footer [style*="color: #444"],
-html.light footer [style*="color: #2a2a2a"],
-html.light footer [style*="color: #1e1e1e"] {
-    color: #9ca3af !important;
+html.light [style*="color: #2a2a2a"],
+html.light [style*="color: #1e1e1e"],
+html.light [style*="color: #333"],
+html.light [style*="color: #222"] {
+    color: #6b7280 !important;
+}
+
+/* Theme toggle button border */
+html.light button[title*="light"],
+html.light button[title*="dark"] {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #374151 !important;
 }
