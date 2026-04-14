@@ -33,6 +33,11 @@ class Tenant extends Model
         return $this->hasMany(Claim::class);
     }
 
+    public function chains(): HasMany
+    {
+        return $this->hasMany(TenantChain::class);
+    }
+
     public function isAtLimit(): bool
     {
         return $this->claims()->count() >= $this->claim_limit;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
+import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import {
@@ -10,8 +10,15 @@ import {
     walletConnectWallet,
     safeWallet,
 } from '@rainbow-me/rainbowkit/wallets'
-import { mainnet } from 'wagmi/chains'
+import { mainnet, base, optimism, arbitrum, polygon, linea, scroll } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
+
+interface ChainOption {
+    chain_id: number
+    chain_name: string
+    registry_address: string | null
+    registrar_address: string | null
+}
 
 interface Tenant {
     name: string
@@ -25,6 +32,31 @@ interface Tenant {
     at_limit: boolean
     gate_type: string
     plan: string
+    chains: ChainOption[]
+}
+
+// Minimal ABI for Durin L2Registrar register function
+const REGISTRAR_ABI = [
+    {
+        name: 'register',
+        type: 'function',
+        stateMutability: 'payable',
+        inputs: [
+            { name: 'label', type: 'string' },
+            { name: 'owner', type: 'address' },
+        ],
+        outputs: [],
+    },
+] as const
+
+// Map chain IDs to wagmi chain objects and display icons
+const CHAIN_META: Record<number, { wagmiChain: any; icon: string }> = {
+    8453:   { wagmiChain: base,     icon: '🔵' },
+    10:     { wagmiChain: optimism, icon: '🔴' },
+    42161:  { wagmiChain: arbitrum, icon: '🔷' },
+    137:    { wagmiChain: polygon,  icon: '🟣' },
+    59144:  { wagmiChain: linea,    icon: '⬛' },
+    534352: { wagmiChain: scroll,   icon: '🟡' },
 }
 
 const queryClient = new QueryClient()
@@ -34,8 +66,10 @@ const _alchemyKey = (window as any).__ALCHEMY_KEY__
 const _rpcUrl = _alchemyKey
     ? `https://eth-mainnet.g.alchemy.com/v2/${_alchemyKey}`
     : 'https://cloudflare-eth.com'
+
+const _l2Chains = Object.values(CHAIN_META).map(m => m.wagmiChain)
 const wagmiConfig = createConfig({
-    chains: [mainnet],
+    chains: [mainnet, ...(_l2Chains as any)],
     connectors: connectorsForWallets(
         [
             {
@@ -52,7 +86,15 @@ const wagmiConfig = createConfig({
         ],
         { appName: 'ENSub', projectId: _projectId }
     ),
-    transports: { [mainnet.id]: http(_rpcUrl) },
+    transports: {
+        [mainnet.id]:  http(_rpcUrl),
+        [base.id]:     http(),
+        [optimism.id]: http(),
+        [arbitrum.id]: http(),
+        [polygon.id]:  http(),
+        [linea.id]:    http(),
+        [scroll.id]:   http(),
+    },
     ssr: false,
 })
 
@@ -128,11 +170,19 @@ type Status = 'idle' | 'checking' | 'available' | 'taken' | 'claiming' | 'claime
 
 function ClaimForm({ tenant }: { tenant: Tenant }) {
     const { address, isConnected } = useAccount()
+    const chainId = useChainId()
+    const { switchChain } = useSwitchChain()
+    const { writeContractAsync } = useWriteContract()
+
     const [name, setName] = useState('')
     const [status, setStatus] = useState<Status>('idle')
     const [message, setMessage] = useState('')
     const [claimedName, setClaimedName] = useState('')
+    const [selectedChain, setSelectedChain] = useState<ChainOption | null>(null) // null = offchain
     const accent = tenant.accent_color
+
+    const activeChains = tenant.chains ?? []
+    const isL2 = selectedChain !== null
 
     useEffect(() => {
         if (!address) return
@@ -160,7 +210,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
         return () => clearTimeout(t)
     }, [name, checkName])
 
-    const handleClaim = async () => {
+    // Offchain (Namestone) claim
+    const handleOffchainClaim = async () => {
         if (!address || status !== 'available') return
         setStatus('claiming')
         const res = await fetch(`/api/claim/${tenant.slug}`, {
@@ -180,6 +231,33 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             setMessage(data.error || 'Something went wrong')
         }
     }
+
+    // L2 (Durin) mint via L2Registrar contract
+    const handleL2Mint = async () => {
+        if (!address || !selectedChain?.registrar_address || status !== 'available') return
+        const targetChainId = selectedChain.chain_id
+        try {
+            setStatus('claiming')
+            if (chainId !== targetChainId) {
+                await switchChain({ chainId: targetChainId })
+            }
+            await writeContractAsync({
+                address: selectedChain.registrar_address as `0x${string}`,
+                abi: REGISTRAR_ABI,
+                functionName: 'register',
+                args: [name, address as `0x${string}`],
+                chainId: targetChainId,
+            })
+            const fullName = `${name}.${tenant.ens_domain}`
+            setClaimedName(fullName)
+            setStatus('claimed')
+        } catch (e: any) {
+            setStatus('error')
+            setMessage(e.shortMessage ?? e.message ?? 'Transaction failed')
+        }
+    }
+
+    const handleClaim = isL2 ? handleL2Mint : handleOffchainClaim
 
     const statusColor: Partial<Record<Status, string>> = {
         available: accent,
@@ -275,6 +353,52 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
 
     return (
         <div style={{ ...card, padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Chain selector — only shown if owner has L2 chains configured */}
+            {activeChains.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Claim on</label>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                            onClick={() => setSelectedChain(null)}
+                            style={{
+                                padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer',
+                                background: !isL2 ? `${accent}20` : 'transparent',
+                                border: `1px solid ${!isL2 ? accent : 'var(--card-border)'}`,
+                                color: !isL2 ? accent : 'var(--text-muted)',
+                                fontWeight: !isL2 ? 'bold' : 'normal',
+                                transition: 'all 0.15s',
+                            }}>
+                            ⚡ Offchain — gasless
+                        </button>
+                        {activeChains.map(ch => {
+                            const meta = CHAIN_META[ch.chain_id]
+                            const active = selectedChain?.chain_id === ch.chain_id
+                            return (
+                                <button
+                                    key={ch.chain_id}
+                                    onClick={() => setSelectedChain(ch)}
+                                    style={{
+                                        padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer',
+                                        background: active ? `${accent}20` : 'transparent',
+                                        border: `1px solid ${active ? accent : 'var(--card-border)'}`,
+                                        color: active ? accent : 'var(--text-muted)',
+                                        fontWeight: active ? 'bold' : 'normal',
+                                        transition: 'all 0.15s',
+                                    }}>
+                                    {meta?.icon ?? '🔗'} {ch.chain_name}
+                                </button>
+                            )
+                        })}
+                    </div>
+                    {isL2 && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0 }}>
+                            Mints as an NFT on {selectedChain!.chain_name}. Small gas fee required (~$0.01).
+                        </p>
+                    )}
+                </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Choose your name</label>
                 <div style={{
@@ -327,11 +451,19 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                     transition: 'all 0.2s',
                 }}
             >
-                {status === 'claiming' ? '⟳ CLAIMING...' : 'CLAIM'}
+                {status === 'claiming'
+                    ? '⟳ MINTING...'
+                    : isL2
+                        ? `MINT ON ${selectedChain!.chain_name.toUpperCase()}`
+                        : 'CLAIM'}
             </button>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                <span>No gas required{tenant.plan === 'free' ? ' · Powered by ENSub' : ''}</span>
+                <span>
+                    {isL2
+                        ? `On-chain NFT · ${selectedChain!.chain_name}`
+                        : `No gas required${tenant.plan === 'free' ? ' · Powered by ENSub' : ''}`}
+                </span>
                 <span>{tenant.claims_count}/{tenant.claim_limit} claimed</span>
             </div>
         </div>

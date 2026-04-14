@@ -6,6 +6,23 @@ import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletCo
 import { mainnet } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
+const DURIN_CHAINS = [
+    { id: 8453,   name: 'Base',      icon: '🔵' },
+    { id: 10,     name: 'Optimism',  icon: '🔴' },
+    { id: 42161,  name: 'Arbitrum',  icon: '🔷' },
+    { id: 137,    name: 'Polygon',   icon: '🟣' },
+    { id: 59144,  name: 'Linea',     icon: '⬛' },
+    { id: 534352, name: 'Scroll',    icon: '🟡' },
+]
+
+interface ChainEntry {
+    chain_id: number
+    chain_name: string
+    registry_address: string | null
+    registrar_address: string | null
+    enabled: boolean
+}
+
 interface ClaimEntry {
     id: number
     wallet_address: string
@@ -31,6 +48,7 @@ interface TenantData {
     allowlist_addresses: string | null
     namestone_api_key: string
     claims: ClaimEntry[]
+    chains: ChainEntry[]
 }
 
 const queryClient = new QueryClient()
@@ -105,6 +123,66 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [revoking, setRevoking] = useState<number | null>(null)
     const [linkCopied, setLinkCopied] = useState(false)
     const [embedCopied, setEmbedCopied] = useState(false)
+
+    // L2 chains (Durin)
+    const [chains, setChains] = useState<ChainEntry[]>(tenant.chains ?? [])
+    const [addingChain, setAddingChain] = useState(false)
+    const [newChainId, setNewChainId] = useState<number>(8453)
+    const [newRegistry, setNewRegistry] = useState('')
+    const [newRegistrar, setNewRegistrar] = useState('')
+    const [chainSaving, setChainSaving] = useState(false)
+    const [chainError, setChainError] = useState('')
+
+    const handleAddChain = async () => {
+        if (!newRegistry.trim() || !newRegistrar.trim()) {
+            setChainError('Both addresses are required')
+            return
+        }
+        setChainSaving(true)
+        setChainError('')
+        try {
+            const res = await fetch(`/api/manage/${tenant.slug}/chains`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chain_id: newChainId,
+                    chain_name: DURIN_CHAINS.find(c => c.id === newChainId)?.name ?? String(newChainId),
+                    registry_address: newRegistry.trim(),
+                    registrar_address: newRegistrar.trim(),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || 'Failed')
+            setChains(prev => [...prev.filter(c => c.chain_id !== newChainId), {
+                chain_id: data.chain_id,
+                chain_name: data.chain_name,
+                registry_address: data.registry_address,
+                registrar_address: data.registrar_address,
+                enabled: true,
+            }])
+            setAddingChain(false)
+            setNewRegistry('')
+            setNewRegistrar('')
+        } catch (e: any) {
+            setChainError(e.message)
+        } finally {
+            setChainSaving(false)
+        }
+    }
+
+    const handleToggleChain = async (chainId: number, enabled: boolean) => {
+        await fetch(`/api/manage/${tenant.slug}/chains/${chainId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled }),
+        })
+        setChains(prev => prev.map(c => c.chain_id === chainId ? { ...c, enabled } : c))
+    }
+
+    const handleRemoveChain = async (chainId: number) => {
+        await fetch(`/api/manage/${tenant.slug}/chains/${chainId}`, { method: 'DELETE' })
+        setChains(prev => prev.filter(c => c.chain_id !== chainId))
+    }
 
     const isOwner = isConnected && address?.toLowerCase() === tenant.owner_address.toLowerCase()
 
@@ -511,6 +589,93 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                 </button>
                             </div>
                         )}
+
+                        {/* L2 Chains (Durin) */}
+                        <div style={{ ...card, marginTop: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0 }}>
+                                    L2 Claim Chains
+                                </h2>
+                                <button
+                                    onClick={() => { setAddingChain(a => !a); setChainError('') }}
+                                    style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
+                                    {addingChain ? 'Cancel' : '+ Add chain'}
+                                </button>
+                            </div>
+
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', marginTop: 0 }}>
+                                Let claimants mint subdomains as NFTs on L2 chains via <a href="https://durin.dev" target="_blank" rel="noreferrer" style={{ color: accent }}>Durin</a>.
+                                Each chain needs a deployed L2Registry and L2Registrar contract.
+                            </p>
+
+                            {/* Offchain always-on row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--row-border)' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>⚡ Offchain (Namestone) — gasless</span>
+                                <span style={{ fontSize: '0.75rem', color: '#00c850', background: 'rgba(0,200,80,0.12)', border: '1px solid rgba(0,200,80,0.25)', borderRadius: '4px', padding: '2px 8px' }}>Always on</span>
+                            </div>
+
+                            {/* Active chains */}
+                            {chains.map(ch => {
+                                const meta = DURIN_CHAINS.find(c => c.id === ch.chain_id)
+                                return (
+                                    <div key={ch.chain_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--row-border)', gap: '8px' }}>
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>
+                                            {meta?.icon ?? '🔗'} {ch.chain_name}
+                                        </span>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={ch.enabled}
+                                                onChange={e => handleToggleChain(ch.chain_id, e.target.checked)}
+                                            />
+                                            {ch.enabled ? 'Enabled' : 'Disabled'}
+                                        </label>
+                                        <button
+                                            onClick={() => handleRemoveChain(ch.chain_id)}
+                                            style={{ fontSize: '0.75rem', color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                                            ✕
+                                        </button>
+                                    </div>
+                                )
+                            })}
+
+                            {chains.length === 0 && !addingChain && (
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '8px', marginBottom: 0 }}>No L2 chains added yet.</p>
+                            )}
+
+                            {/* Add chain form */}
+                            {addingChain && (
+                                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <select
+                                        value={newChainId}
+                                        onChange={e => setNewChainId(Number(e.target.value))}
+                                        style={{ ...inputStyle, cursor: 'pointer' }}>
+                                        {DURIN_CHAINS.filter(c => !chains.find(ch => ch.chain_id === c.id)).map(c => (
+                                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        style={inputStyle}
+                                        placeholder="L2Registry address (0x...)"
+                                        value={newRegistry}
+                                        onChange={e => setNewRegistry(e.target.value)}
+                                    />
+                                    <input
+                                        style={inputStyle}
+                                        placeholder="L2Registrar address (0x...)"
+                                        value={newRegistrar}
+                                        onChange={e => setNewRegistrar(e.target.value)}
+                                    />
+                                    {chainError && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{chainError}</p>}
+                                    <button
+                                        onClick={handleAddChain}
+                                        disabled={chainSaving}
+                                        style={{ padding: '10px', background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, color: '#0a0a1a', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85rem', cursor: chainSaving ? 'not-allowed' : 'pointer' }}>
+                                        {chainSaving ? 'Adding...' : 'Add chain'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
                         {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
 

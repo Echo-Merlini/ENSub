@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\Api\BillingController;
+use App\Http\Controllers\Api\TenantChainController;
 use App\Http\Controllers\Api\ClaimApiController;
 use App\Http\Controllers\Api\OnboardController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,12 @@ Route::get('/pricing', fn () => Inertia::render('Pricing', ['slug' => request()-
 Route::get('/manage/{slug}',  [ClaimController::class, 'manage'])->name('tenant.manage');
 Route::post('/api/manage/{slug}/save', [ClaimController::class, 'manageSave'])->name('tenant.manage.save');
 Route::delete('/api/manage/{slug}/claims/{claim}', [ClaimController::class, 'revokeClaim'])->name('tenant.manage.revoke');
+
+// Durin L2 chain management
+Route::get('/api/manage/{slug}/chains',              [TenantChainController::class, 'index']);
+Route::post('/api/manage/{slug}/chains',             [TenantChainController::class, 'store']);
+Route::patch('/api/manage/{slug}/chains/{chainId}',  [TenantChainController::class, 'update']);
+Route::delete('/api/manage/{slug}/chains/{chainId}', [TenantChainController::class, 'destroy']);
 
 // Public claim pages
 Route::get('/claim/{slug}',    [ClaimController::class, 'show'])->name('claim.show');
