@@ -228,8 +228,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <p style={{ color: accent, fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>{claimedName}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
                     <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                        View on ENS →
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <img src="/images/ens-logo.svg" alt="" style={{ height: '11px', opacity: 0.75 }} />View on ENS →
                     </a>
                     <span style={{ color: 'var(--text-dim)' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
@@ -250,8 +250,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                     textShadow: `0 0 20px ${accent}` }}>{claimedName}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
                     <a href={`https://app.ens.domains/${claimedName}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                        View on ENS →
+                        style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <img src="/images/ens-logo.svg" alt="" style={{ height: '11px', opacity: 0.75 }} />View on ENS →
                     </a>
                     <span style={{ color: 'var(--text-dim)' }}>·</span>
                     <a href={`/claim/${tenant.slug}/my`}
@@ -418,7 +418,7 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                         Why claim a subdomain?
                                     </p>
                                     <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.65, margin: 0 }}>
-                                        ENS subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
+                                        <img src="/images/ens-logo.svg" alt="" style={{ height: '12px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.8 }} />ENS subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
                                         Claiming yours gives your wallet a human-readable name you actually own, not just a username on a platform.
                                     </p>
                                     <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>

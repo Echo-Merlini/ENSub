@@ -140,7 +140,7 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
                                         fontWeight: 'bold', fontSize: '0.85rem',
                                         textDecoration: 'none', letterSpacing: '0.05em',
                                     }}>
-                                    View on ENS
+                                    <img src="/images/ens-logo.svg" alt="" style={{ height: '11px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.85 }} />View on ENS
                                 </a>
                                 <button
                                     onClick={() => navigator.clipboard.writeText(claimedName)}

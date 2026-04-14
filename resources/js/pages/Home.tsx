@@ -124,7 +124,7 @@ const faqs = [
     },
     {
         q: 'What is Namestone?',
-        a: 'Namestone is a gasless ENS offchain resolver. ENSub uses their API to issue subdomains instantly without any on-chain transaction costs.',
+        a: <><img src="/images/namestone-logo.png" alt="" style={{ height: '13px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.85 }} />Namestone is a gasless <img src="/images/ens-logo.svg" alt="" style={{ height: '11px', verticalAlign: 'middle', display: 'inline-block', marginRight: '2px', marginLeft: '1px', opacity: 0.85 }} />ENS offchain resolver. ENSub uses their API to issue subdomains instantly without any on-chain transaction costs.</>,
     },
     {
         q: 'Can I gate claims to NFT holders only?',
@@ -136,7 +136,7 @@ const faqs = [
     },
     {
         q: 'Is my Namestone API key safe?',
-        a: 'Yes. It is stored encrypted and never exposed through the public claim API.',
+        a: <><img src="/images/namestone-logo.png" alt="" style={{ height: '13px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.85 }} />Yes. Your Namestone key is stored encrypted and never exposed through the public claim API.</>,
     },
 ]
 
@@ -337,7 +337,7 @@ export default function Home() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                     {[
                         { icon: '⛓', title: 'On-chain verified', desc: 'ENS ownership checked via mainnet registry — no third party.' },
-                        { icon: '⚡', title: 'Gasless for claimants', desc: 'Powered by Namestone offchain resolution. Zero gas fees.' },
+                        { icon: '⚡', title: 'Gasless for claimants', desc: <><img src="/images/namestone-logo.png" alt="" style={{ height: '12px', verticalAlign: 'middle', display: 'inline-block', marginRight: '3px', opacity: 0.8 }} />Powered by Namestone offchain resolution. Zero gas fees.</> },
                         { icon: '🔒', title: 'Flexible gating', desc: 'Open, NFT-gated, ERC-20 token, or custom allowlist.' },
                         { icon: '🎨', title: 'Fully branded', desc: 'Your logo, accent colour, and domain — your page.' },
                     ].map(f => (
@@ -460,8 +460,11 @@ export default function Home() {
                     <a href="/admin" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none' }}>Admin</a>
                     <a href="/start" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none' }}>Get started</a>
                 </div>
-                <span style={{ color: '#2a2a2a', fontSize: '0.75rem' }}>
-                    © {new Date().getFullYear()} ENSub · Built on ENS + Namestone
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    © {new Date().getFullYear()} ENSub · Built on
+                    <img src="/images/ens-logo.svg" alt="ENS" style={{ height: '11px', verticalAlign: 'middle', display: 'inline-block', opacity: 0.7 }} />
+                    +
+                    <img src="/images/namestone-logo.png" alt="Namestone" style={{ height: '13px', verticalAlign: 'middle', display: 'inline-block', opacity: 0.7 }} />
                 </span>
             </footer>
         </main>

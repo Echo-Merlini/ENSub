@@ -518,7 +518,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
                     Set resolver
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    One-time transaction to point <span style={{ color: ACCENT }}>{ensDomain}</span> at Namestone's resolver
+                    One-time transaction to point <span style={{ color: ACCENT }}>{ensDomain}</span> at <img src="/images/namestone-logo.png" alt="" style={{ height: '12px', verticalAlign: 'middle', display: 'inline-block', marginRight: '2px', opacity: 0.85 }} />Namestone's resolver
                 </p>
             </div>
 
@@ -542,7 +542,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#555' }}>New resolver</span>
                     <span style={{ color: ACCENT, fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {NS_RESOLVER.slice(0, 6)}…{NS_RESOLVER.slice(-4)} (Namestone)
+                        {NS_RESOLVER.slice(0, 6)}…{NS_RESOLVER.slice(-4)} <img src="/images/namestone-logo.png" alt="" style={{ height: '11px', verticalAlign: 'middle', display: 'inline-block', marginLeft: '3px', marginRight: '2px', opacity: 0.8 }} />(Namestone)
                     </span>
                 </div>
             </div>

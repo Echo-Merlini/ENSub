@@ -330,7 +330,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                         {/* Namestone */}
                         <div style={card}>
-                            <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '4px' }}>Namestone API key</h2>
+                            <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <img src="/images/namestone-logo.png" alt="" style={{ height: '16px', opacity: 0.85 }} />Namestone API key
+                            </h2>
                             <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '14px' }}>
                                 Get your key at <a href="https://namestone.com" target="_blank" rel="noopener noreferrer"
                                     style={{ color: accent }}>namestone.com</a>
