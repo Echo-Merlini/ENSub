@@ -71,8 +71,9 @@ class ClaimApiController extends Controller
             ->first();
 
         return response()->json([
-            'subdomain' => $claim?->subdomain,
-            'full_name' => $claim?->full_name,
+            'subdomain'     => $claim?->subdomain,
+            'full_name'     => $claim?->full_name,
+            'minted_chains' => $claim?->minted_chains ?? [],
         ]);
     }
 

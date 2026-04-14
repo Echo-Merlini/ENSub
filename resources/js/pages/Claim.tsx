@@ -186,6 +186,9 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                     setClaimedName(data.full_name)
                     setName(data.full_name.split('.')[0])
                     setStatus('already-claimed')
+                    if (Array.isArray(data.minted_chains) && data.minted_chains.length > 0) {
+                        setMintedChains(new Set(data.minted_chains))
+                    }
                 }
             })
     }, [address, tenant.slug])

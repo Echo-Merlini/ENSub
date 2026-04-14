@@ -41,6 +41,21 @@ class ClaimResource extends Resource
                 Tables\Columns\TextColumn::make('wallet_address')
                     ->searchable()->limit(18)
                     ->tooltip(fn ($record) => $record->wallet_address),
+                Tables\Columns\TextColumn::make('minted_chains')
+                    ->label('L2 Mints')
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state)) return '—';
+                        $names = [
+                            8453   => 'Base',
+                            10     => 'Optimism',
+                            42161  => 'Arbitrum',
+                            137    => 'Polygon',
+                            59144  => 'Linea',
+                            534352 => 'Scroll',
+                        ];
+                        return implode(', ', array_map(fn($id) => $names[$id] ?? "Chain $id", $state));
+                    })
+                    ->badge()->color('info'),
                 Tables\Columns\TextColumn::make('tx_hash')
                     ->limit(16)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
