@@ -197,7 +197,15 @@ export default function Home() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img src="/images/ensub-logo.png" alt="ENSub" style={{ width: '28px', height: '28px', borderRadius: '6px' }} />
-                    <span style={{ fontSize: '1.15rem', fontWeight: 'bold', color: ACCENT, textShadow: `0 0 12px ${ACCENT}80` }}>
+                    <span style={{
+                        fontSize: '0.85rem',
+                        fontWeight: 'bold',
+                        color: ACCENT,
+                        border: `1px solid ${ACCENT}55`,
+                        borderRadius: '6px',
+                        padding: '2px 8px',
+                        letterSpacing: '0.05em',
+                    }}>
                         ENSub
                     </span>
                 </div>
@@ -250,7 +258,7 @@ export default function Home() {
                     <img
                         src="/images/ensub-logo.png"
                         alt="ENSub"
-                        style={{ width: '72px', height: '72px', borderRadius: '16px', display: 'block', margin: '0 auto 20px', boxShadow: `0 0 24px ${ACCENT}40` }}
+                        style={{ width: '72px', height: '72px', borderRadius: '16px', display: 'block', margin: '0 auto 20px' }}
                     />
                     <div style={{
                         display: 'inline-block',
