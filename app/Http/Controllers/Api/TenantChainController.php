@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Console\Commands\SyncL2Mints;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantChain;
@@ -65,5 +66,25 @@ class TenantChainController extends Controller
                    ->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    // POST /api/manage/{slug}/chains/sync
+    public function sync(string $slug): JsonResponse
+    {
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+
+        try {
+            $command = new SyncL2Mints();
+            $command->setLaravel(app());
+
+            // Run sync for this tenant only via Artisan
+            \Artisan::call('l2:sync', ['--tenant' => $slug]);
+
+            // Return refreshed chain list with updated last_synced_block
+            $chains = $tenant->chains()->orderBy('chain_id')->get();
+            return response()->json(['ok' => true, 'chains' => $chains]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

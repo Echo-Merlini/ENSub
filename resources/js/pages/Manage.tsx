@@ -244,6 +244,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [chainSaving, setChainSaving] = useState(false)
     const [chainError, setChainError] = useState('')
     const [deployStep, setDeployStep] = useState('')
+    const [syncing, setSyncing] = useState(false)
+    const [syncResult, setSyncResult] = useState('')
 
     // Phase 2: ENS on-chain resolution
     const [ensResolutionSaving, setEnsResolutionSaving] = useState(false)
@@ -442,6 +444,27 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     }
 
     // Phase 2: set ENS resolver (generic — takes target address)
+    const handleSyncL2Mints = async () => {
+        setSyncing(true)
+        setSyncResult('')
+        try {
+            const res = await fetch(`/api/manage/${tenant.slug}/chains/sync`, { method: 'POST' })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Sync failed')
+            // Refresh chains (updated last_synced_block) and claims
+            if (Array.isArray(data.chains)) setChains(data.chains)
+            setSyncResult('Sync complete')
+            // Refresh claims list
+            const claimsRes = await fetch(`/api/claim/${tenant.slug}/mine?all=1`)
+            // mine endpoint is per-wallet — refetch manage page claims instead
+            setTimeout(() => setSyncResult(''), 4000)
+        } catch (e: any) {
+            setSyncResult(e.message)
+        } finally {
+            setSyncing(false)
+        }
+    }
+
     const handleSetResolverTo = async (resolverAddress: `0x${string}`, label: string) => {
         setEnsResolutionSaving(true)
         setEnsResolutionError('')
@@ -800,23 +823,30 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleRevoke(c)}
-                                                disabled={revoking === c.id}
-                                                style={{
-                                                    flexShrink: 0,
-                                                    padding: '5px 10px',
-                                                    borderRadius: '6px',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold',
-                                                    background: 'transparent',
-                                                    border: '1px solid rgba(255,68,68,0.3)',
-                                                    color: revoking === c.id ? COLORS.dim : '#ff6666',
-                                                    cursor: revoking === c.id ? 'not-allowed' : 'pointer',
-                                                }}
-                                            >
-                                                {revoking === c.id ? '...' : 'Revoke'}
-                                            </button>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
+                                                <button
+                                                    onClick={() => handleRevoke(c)}
+                                                    disabled={revoking === c.id}
+                                                    title={(c.minted_chains ?? []).length > 0 ? 'Removes offchain record only — L2 NFTs cannot be burned' : 'Remove this claim'}
+                                                    style={{
+                                                        padding: '5px 10px',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold',
+                                                        background: 'transparent',
+                                                        border: '1px solid rgba(255,68,68,0.3)',
+                                                        color: revoking === c.id ? COLORS.dim : '#ff6666',
+                                                        cursor: revoking === c.id ? 'not-allowed' : 'pointer',
+                                                    }}
+                                                >
+                                                    {revoking === c.id ? '...' : 'Revoke'}
+                                                </button>
+                                                {(c.minted_chains ?? []).length > 0 && (
+                                                    <span style={{ fontSize: '0.62rem', color: COLORS.dim, whiteSpace: 'nowrap' as const }}>
+                                                        offchain only
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -919,15 +949,26 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                         {/* L2 Chains (Durin) */}
                         <div style={{ ...card, marginTop: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
                                 <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0 }}>
                                     L2 Claim Chains
                                 </h2>
-                                <button
-                                    onClick={() => { setAddingChain(a => !a); setChainError('') }}
-                                    style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
-                                    {addingChain ? 'Cancel' : '+ Add chain'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    {chains.length > 0 && (
+                                        <button
+                                            onClick={handleSyncL2Mints}
+                                            disabled={syncing}
+                                            title="Sync on-chain NameRegistered events into the claims list"
+                                            style={{ fontSize: '0.75rem', background: 'var(--row-bg)', border: '1px solid var(--row-border)', color: syncing ? COLORS.dim : COLORS.muted, borderRadius: '6px', padding: '4px 10px', cursor: syncing ? 'not-allowed' : 'pointer' }}>
+                                            {syncing ? '⟳ Syncing…' : syncResult || '⟳ Sync mints'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => { setAddingChain(a => !a); setChainError('') }}
+                                        style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
+                                        {addingChain ? 'Cancel' : '+ Add chain'}
+                                    </button>
+                                </div>
                             </div>
 
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', marginTop: 0 }}>

@@ -14,11 +14,13 @@ class TenantChain extends Model
         'registry_address',
         'registrar_address',
         'enabled',
+        'last_synced_block',
     ];
 
     protected $casts = [
-        'chain_id' => 'integer',
-        'enabled'  => 'boolean',
+        'chain_id'          => 'integer',
+        'enabled'           => 'boolean',
+        'last_synced_block' => 'integer',
     ];
 
     public function tenant(): BelongsTo

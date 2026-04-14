@@ -23,6 +23,7 @@ Route::get('/api/manage/{slug}/chains',              [TenantChainController::cla
 Route::post('/api/manage/{slug}/chains',             [TenantChainController::class, 'store']);
 Route::patch('/api/manage/{slug}/chains/{chainId}',  [TenantChainController::class, 'update']);
 Route::delete('/api/manage/{slug}/chains/{chainId}', [TenantChainController::class, 'destroy']);
+Route::post('/api/manage/{slug}/chains/sync',        [TenantChainController::class, 'sync']);
 
 // Public claim pages
 Route::get('/claim/{slug}',    [ClaimController::class, 'show'])->name('claim.show');
