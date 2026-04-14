@@ -33,8 +33,10 @@ class SyncL2Mints extends Command
         59144  => 'linea-mainnet',
     ];
 
-    // Max blocks per eth_getLogs request (stays within RPC limits)
-    private const CHUNK_SIZE = 10_000;
+    // Max blocks per eth_getLogs request — 2000 is safe for all public RPCs
+    private const CHUNK_SIZE = 2_000;
+
+    private ?int $currentChainId = null;
 
     public function handle(): int
     {
@@ -63,6 +65,7 @@ class SyncL2Mints extends Command
 
     private function syncChain(TenantChain $chain, string $eventTopic): void
     {
+        $this->currentChainId = $chain->chain_id;
         $tenant  = $chain->tenant;
         $rpcUrl  = $this->getRpcUrl($chain->chain_id);
         $label   = "{$tenant->slug} / {$chain->chain_name}";
@@ -212,29 +215,50 @@ class SyncL2Mints extends Command
 
     private function getLogs(string $rpcUrl, string $address, string $topic, int $from, int $to): ?array
     {
-        try {
-            $res = Http::timeout(30)->post($rpcUrl, [
-                'jsonrpc' => '2.0',
-                'method'  => 'eth_getLogs',
-                'params'  => [[
-                    'fromBlock' => '0x' . dechex($from),
-                    'toBlock'   => '0x' . dechex($to),
-                    'address'   => $address,
-                    'topics'    => [$topic],
-                ]],
-                'id' => 1,
-            ]);
+        $payload = [
+            'jsonrpc' => '2.0',
+            'method'  => 'eth_getLogs',
+            'params'  => [[
+                'fromBlock' => '0x' . dechex($from),
+                'toBlock'   => '0x' . dechex($to),
+                'address'   => $address,
+                'topics'    => [$topic],
+            ]],
+            'id' => 1,
+        ];
 
-            if ($res->json('error')) {
-                Log::warning('SyncL2Mints: eth_getLogs error', $res->json('error'));
-                return null;
+        $urls = [$rpcUrl];
+
+        // If using Alchemy and it fails with a block-range restriction (free tier),
+        // transparently retry with the public RPC fallback.
+        foreach ($urls as $url) {
+            try {
+                $res   = Http::timeout(30)->post($url, $payload);
+                $error = $res->json('error');
+
+                if ($error) {
+                    $msg = $error['message'] ?? '';
+                    // Alchemy free-tier block range limit — retry on public RPC
+                    if (str_contains($msg, 'block range') || str_contains($msg, 'Free tier')) {
+                        Log::info('SyncL2Mints: Alchemy block-range limit hit, falling back to public RPC');
+                        // Append public RPC as next attempt if not already queued
+                        $chainId = $this->currentChainId;
+                        if ($chainId && isset(self::PUBLIC_RPC[$chainId]) && !in_array(self::PUBLIC_RPC[$chainId], $urls)) {
+                            $urls[] = self::PUBLIC_RPC[$chainId];
+                        }
+                        continue;
+                    }
+                    Log::warning('SyncL2Mints: eth_getLogs error', (array) $error);
+                    return null;
+                }
+
+                return $res->json('result') ?? [];
+            } catch (\Throwable $e) {
+                Log::error('SyncL2Mints: HTTP error', ['url' => $url, 'error' => $e->getMessage()]);
             }
-
-            return $res->json('result') ?? [];
-        } catch (\Throwable $e) {
-            Log::error('SyncL2Mints: HTTP error', ['error' => $e->getMessage()]);
-            return null;
         }
+
+        return null;
     }
 
     /**
