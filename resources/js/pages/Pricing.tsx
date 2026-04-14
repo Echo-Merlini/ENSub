@@ -117,7 +117,7 @@ export default function Pricing({ slug }: Props) {
             {/* Nav */}
             <header style={{
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(15,17,23,0.9)',
+                background: 'var(--header-bg)',
                 backdropFilter: 'blur(8px)',
                 padding: '16px 32px',
                 display: 'flex',
@@ -149,7 +149,7 @@ export default function Pricing({ slug }: Props) {
                 {/* Email input (shown when plan selected without email) */}
                 {emailFor && (
                     <div style={{
-                        background: 'rgba(22,33,62,0.7)',
+                        background: 'var(--card-bg)',
                         border: `1px solid ${ACCENT}33`,
                         borderRadius: '12px',
                         padding: '28px',
@@ -169,8 +169,8 @@ export default function Pricing({ slug }: Props) {
                             onKeyDown={e => e.key === 'Enter' && handleUpgrade(emailFor as 'pro' | 'business')}
                             style={{
                                 width: '100%',
-                                background: 'rgba(10,10,30,0.5)',
-                                border: '1.5px solid rgba(255,255,255,0.08)',
+                                background: 'var(--input-bg)',
+                                border: '1.5px solid var(--input-border)',
                                 borderRadius: '10px',
                                 padding: '12px 16px',
                                 color: '#e4e4e4',
@@ -198,7 +198,7 @@ export default function Pricing({ slug }: Props) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'start' }}>
                     {/* Free — current / reference */}
                     <div style={{
-                        background: 'rgba(22,33,62,0.4)',
+                        background: 'var(--card-bg)',
                         border: '1px solid rgba(255,255,255,0.06)',
                         borderRadius: '16px',
                         padding: '32px',
@@ -227,7 +227,7 @@ export default function Pricing({ slug }: Props) {
 
                     {plans.map(plan => (
                         <div key={plan.id} style={{
-                            background: 'rgba(22,33,62,0.7)',
+                            background: 'var(--card-bg)',
                             border: `1.5px solid ${plan.highlight ? `${ACCENT}55` : 'rgba(255,255,255,0.08)'}`,
                             borderRadius: '16px',
                             backdropFilter: 'blur(8px)',

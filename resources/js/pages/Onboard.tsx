@@ -53,8 +53,8 @@ const wagmiConfig = getWagmiConfig()
 const ACCENT = '#00ff88'
 
 const card = {
-    background: 'rgba(22,33,62,0.7)',
-    border: '1px solid rgba(255,255,255,0.07)',
+    background: 'var(--card-bg)',
+    border: '1px solid var(--card-border)',
     borderRadius: '14px',
     backdropFilter: 'blur(8px)',
     padding: '36px 32px',
@@ -62,8 +62,8 @@ const card = {
 
 const input = {
     width: '100%',
-    background: 'rgba(10,10,30,0.5)',
-    border: '1.5px solid rgba(255,255,255,0.08)',
+    background: 'var(--input-bg)',
+    border: '1.5px solid var(--input-border)',
     borderRadius: '10px',
     padding: '12px 16px',
     color: '#e4e4e4',
@@ -530,7 +530,7 @@ function StepResolver({ ensDomain, onDone }: { ensDomain: string; onDone: () => 
             </div>
 
             <div style={{
-                background: 'rgba(10,10,30,0.4)', border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--row-bg)', border: '1px solid var(--card-border)',
                 borderRadius: '10px', padding: '14px 18px', fontSize: '0.8rem',
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -665,7 +665,7 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '12px',
-                    background: 'rgba(10,10,30,0.3)',
+                    background: 'var(--row-bg)',
                 }}>
                     <div>
                         <p style={{ color: '#ccc', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '2px' }}>
@@ -779,7 +779,7 @@ function Step4({ ensDomain, onDone }: { ensDomain: string; onDone: (config: Bran
 
             {/* Preview pill */}
             <div style={{
-                background: 'rgba(10,10,30,0.6)',
+                background: 'var(--input-bg)',
                 border: `1px solid ${accentColor}33`,
                 borderRadius: '10px',
                 padding: '14px 18px',
@@ -923,8 +923,8 @@ function Step5({
                     <label style={{ fontSize: '0.8rem', color: '#888' }}>Billing email</label>
                     <input
                         style={{
-                            width: '100%', background: 'rgba(10,10,30,0.5)',
-                            border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: '8px',
+                            width: '100%', background: 'var(--input-bg)',
+                            border: '1.5px solid var(--input-border)', borderRadius: '8px',
                             padding: '11px 14px', color: '#e4e4e4',
                             fontFamily: "'Inter', system-ui, sans-serif", fontSize: '0.9rem',
                             outline: 'none', boxSizing: 'border-box' as const,
@@ -1068,7 +1068,7 @@ function OnboardWizard() {
             {/* Header */}
             <header style={{
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(15,17,23,0.9)',
+                background: 'var(--header-bg)',
                 backdropFilter: 'blur(8px)',
                 padding: '16px 32px',
                 display: 'flex',

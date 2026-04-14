@@ -62,8 +62,8 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
     }, [address, tenant.slug])
 
     const card = {
-        background: 'rgba(22,33,62,0.7)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
         borderRadius: '14px',
         backdropFilter: 'blur(8px)',
         padding: '40px 32px',
@@ -75,7 +75,7 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
             {/* Header */}
             <header style={{
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(15,17,23,0.8)',
+                background: 'var(--header-bg)',
                 backdropFilter: 'blur(8px)',
                 padding: '16px 32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',

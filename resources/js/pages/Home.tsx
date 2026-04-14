@@ -56,7 +56,7 @@ const btnGhost = {
 }
 
 const card = (accent = 'rgba(255,255,255,0.06)') => ({
-    background: 'rgba(22,33,62,0.5)',
+    background: 'var(--card-bg)',
     border: `1px solid ${accent}`,
     borderRadius: '16px',
     backdropFilter: 'blur(8px)',
@@ -189,7 +189,7 @@ export default function Home() {
             <nav style={{
                 position: 'sticky', top: 0, zIndex: 50,
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
-                background: 'rgba(10,12,20,0.85)',
+                background: 'var(--header-bg)',
                 backdropFilter: 'blur(12px)',
                 padding: '0 32px',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
