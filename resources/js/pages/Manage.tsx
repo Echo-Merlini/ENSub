@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
 import { mainnet } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
@@ -542,10 +542,17 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 }
 
 export default function Manage({ tenant }: { tenant: TenantData }) {
+    const accent = tenant.accent_color
+    const [isLight, setIsLight] = useState(() => document.documentElement.classList.contains('light'))
+    useEffect(() => {
+        const obs = new MutationObserver(() => setIsLight(document.documentElement.classList.contains('light')))
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => obs.disconnect()
+    }, [])
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider>
+                <RainbowKitProvider theme={isLight ? lightTheme({ accentColor: accent }) : darkTheme({ accentColor: accent })}>
                     <ManageContent tenant={tenant} />
                 </RainbowKitProvider>
             </QueryClientProvider>

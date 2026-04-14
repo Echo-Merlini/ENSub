@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import {
     injectedWallet,
     metaMaskWallet,
@@ -121,7 +121,7 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
 
                     {isConnected && checked && !loading && claimedName && (
                         <div style={{ ...card, borderColor: `${accent}44`, boxShadow: `0 0 30px ${accent}15` }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
+                            <div style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--text-muted)' }}>✓</div>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '4px' }}>You own</p>
                             <p style={{
                                 color: accent, fontSize: '1.4rem', fontWeight: 'bold',
@@ -191,10 +191,17 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
 }
 
 export default function MyName({ tenant }: { tenant: Tenant }) {
+    const accent = tenant.accent_color
+    const [isLight, setIsLight] = useState(() => document.documentElement.classList.contains('light'))
+    useEffect(() => {
+        const obs = new MutationObserver(() => setIsLight(document.documentElement.classList.contains('light')))
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => obs.disconnect()
+    }, [])
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider>
+                <RainbowKitProvider theme={isLight ? lightTheme({ accentColor: accent }) : darkTheme({ accentColor: accent })}>
                     <MyNameContent tenant={tenant} />
                 </RainbowKitProvider>
             </QueryClientProvider>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, useSignMessage, useReadContract, useWriteContract, useWaitForTransactionReceipt, createConfig, http } from 'wagmi'
 import { namehash } from 'viem/ens'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import {
     injectedWallet,
     metaMaskWallet,
@@ -910,7 +910,7 @@ function Step5({
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
                 <div>
-                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--text-muted)' }}>✓</div>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '8px' }}>
                         Page created!
                     </h2>
@@ -1163,10 +1163,16 @@ function OnboardWizard() {
 }
 
 export default function Onboard() {
+    const [isLight, setIsLight] = useState(() => document.documentElement.classList.contains('light'))
+    useEffect(() => {
+        const obs = new MutationObserver(() => setIsLight(document.documentElement.classList.contains('light')))
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => obs.disconnect()
+    }, [])
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider>
+                <RainbowKitProvider theme={isLight ? lightTheme({ accentColor: ACCENT }) : darkTheme({ accentColor: ACCENT })}>
                     <OnboardWizard />
                 </RainbowKitProvider>
             </QueryClientProvider>

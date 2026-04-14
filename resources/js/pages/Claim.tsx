@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { WagmiProvider, useAccount, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton, connectorsForWallets } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import {
     injectedWallet,
     metaMaskWallet,
@@ -223,7 +223,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     if (status === 'already-claimed') {
         return (
             <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: `${accent}44` }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
+                <div style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--text-muted)' }}>✓</div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>You already claimed</p>
                 <p style={{ color: accent, fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>{claimedName}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '4px' }}>
@@ -244,7 +244,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     if (status === 'claimed') {
         return (
             <div style={{ ...card, padding: '40px 32px', textAlign: 'center', borderColor: `${accent}66`, boxShadow: `0 0 30px ${accent}20` }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎉</div>
+                <div style={{ fontSize: '1.5rem', marginBottom: '12px', color: 'var(--text-muted)' }}>✓</div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Successfully claimed!</p>
                 <p style={{ color: accent, fontSize: '1.4rem', fontWeight: 'bold', margin: '8px 0',
                     textShadow: `0 0 20px ${accent}` }}>{claimedName}</p>
@@ -340,11 +340,17 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
 
 export default function Claim({ tenant }: { tenant: Tenant }) {
     const accent = tenant.accent_color
+    const [isLight, setIsLight] = useState(() => document.documentElement.classList.contains('light'))
+    useEffect(() => {
+        const obs = new MutationObserver(() => setIsLight(document.documentElement.classList.contains('light')))
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => obs.disconnect()
+    }, [])
 
     return (
         <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider>
+                <RainbowKitProvider theme={isLight ? lightTheme({ accentColor: accent }) : darkTheme({ accentColor: accent })}>
                     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
                         {/* Header */}
