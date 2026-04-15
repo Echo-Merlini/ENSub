@@ -5,22 +5,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg-primary:    #0f1117;
-    --bg-secondary:  #161b27;
+    --bg-primary:    #111418;
+    --bg-secondary:  #181d24;
     --accent:        #00ff88;
     --border:        rgba(255, 255, 255, 0.06);
     --text:          #e4e4e4;
     --text-muted:    #888;
     --text-dim:      #555;
-    --card-bg:       rgba(22, 33, 62, 0.7);
-    --card-border:   rgba(255, 255, 255, 0.07);
-    --input-bg:      rgba(10, 10, 30, 0.5);
-    --input-border:  rgba(255, 255, 255, 0.08);
-    --row-bg:        rgba(10, 10, 30, 0.4);
-    --row-border:    rgba(255, 255, 255, 0.05);
-    --pre-bg:        rgba(0, 0, 0, 0.4);
-    --pre-border:    rgba(255, 255, 255, 0.06);
-    --header-bg:     rgba(15, 17, 23, 0.9);
+    --card-bg:       rgba(55, 65, 78, 0.72);
+    --card-border:   rgba(255, 255, 255, 0.09);
+    --input-bg:      rgba(25, 30, 38, 0.65);
+    --input-border:  rgba(255, 255, 255, 0.1);
+    --row-bg:        rgba(25, 30, 38, 0.5);
+    --row-border:    rgba(255, 255, 255, 0.06);
+    --pre-bg:        rgba(0, 0, 0, 0.35);
+    --pre-border:    rgba(255, 255, 255, 0.07);
+    --header-bg:     rgba(17, 20, 24, 0.92);
+    --dropdown-bg:   #242b35;
 }
 
 body {
@@ -49,6 +50,7 @@ html.light {
     --pre-bg:       rgba(0, 0, 0, 0.05);
     --pre-border:   rgba(0, 0, 0, 0.1);
     --header-bg:    rgba(240, 242, 245, 0.95);
+    --dropdown-bg:  #ffffff;
 }
 
 html.light body {

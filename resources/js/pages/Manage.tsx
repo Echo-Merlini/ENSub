@@ -1327,7 +1327,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                     <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>▾</span>
                                                 </button>
                                                 {chainDropdownOpen && (
-                                                    <div style={{ position: 'absolute' as const, top: '100%', left: 0, right: 0, zIndex: 50, marginTop: '2px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+                                                    <div style={{ position: 'absolute' as const, top: '100%', left: 0, right: 0, zIndex: 50, marginTop: '2px', background: 'var(--dropdown-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
                                                         {available.map(c => (
                                                             <button
                                                                 key={c.id}
