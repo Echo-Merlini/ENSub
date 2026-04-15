@@ -54,14 +54,19 @@ const REGISTRAR_ABI = [
 ] as const
 
 // Map chain IDs to wagmi chain objects and display icons
-const CHAIN_META: Record<number, { wagmiChain: any; icon: string }> = {
-    8453:   { wagmiChain: base,     icon: '🔵' },
-    10:     { wagmiChain: optimism, icon: '🔴' },
-    42161:  { wagmiChain: arbitrum, icon: '🔷' },
-    137:    { wagmiChain: polygon,  icon: '🟣' },
-    59144:  { wagmiChain: linea,    icon: '⬛' },
-    534352: { wagmiChain: scroll,   icon: '🟡' },
+const CHAIN_META: Record<number, { wagmiChain: any; icon: string; iconUrl: string }> = {
+    8453:   { wagmiChain: base,     icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
+    10:     { wagmiChain: optimism, icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
+    42161:  { wagmiChain: arbitrum, icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
+    137:    { wagmiChain: polygon,  icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
+    59144:  { wagmiChain: linea,    icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
+    534352: { wagmiChain: scroll,   icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
 }
+
+const ChainIcon = ({ meta, size = 18 }: { meta?: typeof CHAIN_META[number]; size?: number }) =>
+    meta?.iconUrl
+        ? <img src={meta.iconUrl} width={size} height={size} alt={''} style={{ borderRadius: '50%', verticalAlign: 'middle', display: 'inline-block' }} />
+        : <span>{meta?.icon ?? '🔗'}</span>
 
 const queryClient = new QueryClient()
 
@@ -407,7 +412,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                                     ...(!isLast ? { borderBottom: '1px solid var(--card-border)' } : {}),
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <span>{meta?.icon ?? '🔗'}</span>
+                                        <ChainIcon meta={meta} size={22} />
                                         <div>
                                             <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text)' }}>{ch.chain_name}</div>
                                             <div style={{ fontSize: '0.71rem', color: 'var(--text-dim)' }}>on-chain NFT · ~$0.01 gas</div>
@@ -523,7 +528,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                                         fontWeight: active ? 'bold' : 'normal',
                                         transition: 'all 0.15s',
                                     }}>
-                                    {meta?.icon ?? '🔗'} {ch.chain_name}
+                                    <ChainIcon meta={meta} size={14} /> {ch.chain_name}
                                 </button>
                             )
                         })}

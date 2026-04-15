@@ -9,13 +9,18 @@ import { mainnet, base, optimism, arbitrum, polygon, linea, scroll } from 'wagmi
 import '@rainbow-me/rainbowkit/styles.css'
 
 const DURIN_CHAINS = [
-    { id: 8453,   name: 'Base',      icon: '🔵' },
-    { id: 10,     name: 'Optimism',  icon: '🔴' },
-    { id: 42161,  name: 'Arbitrum',  icon: '🔷' },
-    { id: 137,    name: 'Polygon',   icon: '🟣' },
-    { id: 59144,  name: 'Linea',     icon: '⬛' },
-    { id: 534352, name: 'Scroll',    icon: '🟡' },
+    { id: 8453,   name: 'Base',      icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
+    { id: 10,     name: 'Optimism',  icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
+    { id: 42161,  name: 'Arbitrum',  icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
+    { id: 137,    name: 'Polygon',   icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
+    { id: 59144,  name: 'Linea',     icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
+    { id: 534352, name: 'Scroll',    icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
 ]
+
+const ChainIcon = ({ chain, size = 16 }: { chain?: typeof DURIN_CHAINS[0], size?: number }) =>
+    chain?.iconUrl
+        ? <img src={chain.iconUrl} width={size} height={size} alt={chain.name} style={{ borderRadius: '50%', verticalAlign: 'middle', display: 'inline-block' }} />
+        : <span>{chain?.icon ?? '🔗'}</span>
 
 const CHAIN_META: Record<number, { wagmiChain: any }> = {
     8453:   { wagmiChain: base     },
@@ -957,8 +962,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                     {(c.minted_chains ?? []).map(cid => {
                                                         const meta = DURIN_CHAINS.find(d => d.id === cid)
                                                         return (
-                                                            <span key={cid} style={{ fontSize: '0.7rem', color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
-                                                                {meta?.icon ?? '🔗'} {meta?.name ?? `Chain ${cid}`}
+                                                            <span key={cid} style={{ fontSize: '0.7rem', color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '3px', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                                <ChainIcon chain={meta} size={12} /> {meta?.name ?? `Chain ${cid}`}
                                                             </span>
                                                         )
                                                     })}
@@ -1137,8 +1142,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     <div key={ch.chain_id} style={{ borderBottom: '1px solid var(--row-border)' }}>
                                         {/* Chain row */}
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', gap: '8px' }}>
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>
-                                                {meta?.icon ?? '🔗'} {ch.chain_name}
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <ChainIcon chain={meta} /> {ch.chain_name}
                                             </span>
                                             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
                                                 <input
@@ -1483,8 +1488,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             const isActive = ensResolutionSaving && ensResolutionStep.includes(ch.chain_name)
                                             return (
                                                 <div key={ch.chain_id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <span style={{ fontSize: '0.82rem', color: COLORS.text, flex: 1 }}>
-                                                        {meta?.icon} {ch.chain_name}
+                                                    <span style={{ fontSize: '0.82rem', color: COLORS.text, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <ChainIcon chain={meta} /> {ch.chain_name}
                                                     </span>
                                                     <code style={{ fontSize: '0.68rem', color: COLORS.dim, fontFamily: 'monospace', flex: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                                                         {ch.registry_address}
