@@ -1152,14 +1152,12 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <ChainIcon chain={meta} /> {ch.chain_name}
                                             </span>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={ch.enabled}
-                                                    onChange={e => handleToggleChain(ch.chain_id, e.target.checked)}
-                                                />
-                                                {ch.enabled ? 'Enabled' : 'Disabled'}
-                                            </label>
+                                            <button
+                                                onClick={() => handleToggleChain(ch.chain_id, !ch.enabled)}
+                                                title={ch.enabled ? 'Disable this chain for claimants' : 'Enable this chain for claimants'}
+                                                style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '3px 9px', borderRadius: '5px', cursor: 'pointer', whiteSpace: 'nowrap' as const, border: ch.enabled ? `1px solid #00c85044` : '1px solid var(--row-border)', background: ch.enabled ? 'rgba(0,200,80,0.1)' : 'var(--row-bg)', color: ch.enabled ? '#00c850' : 'var(--text-dim)' }}>
+                                                {ch.enabled ? '● Enabled' : '○ Disabled'}
+                                            </button>
                                             <button
                                                 onClick={() => {
                                                     if (settingsOpen) { setSettingsChainId(null) }
