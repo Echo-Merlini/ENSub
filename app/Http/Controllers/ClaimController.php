@@ -190,6 +190,13 @@ class ClaimController extends Controller
             return response()->json(['error' => 'Invalid mode'], 422);
         }
 
+        if ($mode === 'l1resolver' && $tenant->plan !== 'business') {
+            return response()->json([
+                'error'   => 'On-chain ENS resolution requires a Business plan.',
+                'upgrade' => true,
+            ], 403);
+        }
+
         $tenant->update(['resolver_mode' => $mode]);
 
         return response()->json(['resolver_mode' => $mode]);

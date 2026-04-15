@@ -15,6 +15,7 @@ class TenantChain extends Model
         'registrar_address',
         'enabled',
         'last_synced_block',
+        'registrar_type',
     ];
 
     protected $casts = [

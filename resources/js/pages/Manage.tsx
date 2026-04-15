@@ -395,6 +395,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                     chain_name: DURIN_CHAINS.find(c => c.id === newChainId)?.name ?? String(newChainId),
                     registry_address: newRegistry.trim(),
                     registrar_address: newRegistrar.trim(),
+                    registrar_type: registrarType,
                 }),
             })
             const data = await res.json()
@@ -1175,13 +1176,22 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             {syncing ? '⟳ Syncing…' : syncResult || '⟳ Sync mints'}
                                         </button>
                                     )}
-                                    {l2SectionOpen && (
-                                        <button
-                                            onClick={e => { e.stopPropagation(); setAddingChain(a => !a); setChainError('') }}
-                                            style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
-                                            {addingChain ? 'Cancel' : '+ Add chain'}
-                                        </button>
-                                    )}
+                                    {l2SectionOpen && (() => {
+                                        const atFreeLimit = tenant.plan === 'free' && chains.length >= 1 && !addingChain
+                                        return atFreeLimit ? (
+                                            <a href={`/pricing?slug=${tenant.slug}`}
+                                                onClick={e => e.stopPropagation()}
+                                                style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', padding: '4px 10px', textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
+                                                🔒 Upgrade for more
+                                            </a>
+                                        ) : (
+                                            <button
+                                                onClick={e => { e.stopPropagation(); setAddingChain(a => !a); setChainError('') }}
+                                                style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
+                                                {addingChain ? 'Cancel' : '+ Add chain'}
+                                            </button>
+                                        )
+                                    })()}
                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', userSelect: 'none' as const }}>{l2SectionOpen ? '▾' : '▸'}</span>
                                 </div>
                             </div>
@@ -1322,14 +1332,18 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                                                 {/* Registrar type selector */}
                                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                                    {(['open', 'ensub'] as const).map(t => (
+                                                    {(['open', 'ensub'] as const).map(t => {
+                                                        const locked = t === 'ensub' && tenant.plan === 'free'
+                                                        return (
                                                         <button
                                                             key={t}
-                                                            onClick={() => setRegistrarType(t)}
-                                                            style={{ flex: 1, padding: '8px', background: registrarType === t ? `${accent}22` : 'var(--row-bg)', border: `1px solid ${registrarType === t ? accent + '66' : 'var(--card-border)'}`, color: registrarType === t ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: registrarType === t ? 'bold' : 'normal', cursor: 'pointer' }}>
-                                                            {t === 'open' ? '🔓 Open (free, no limits)' : '🔒 ENSub (1-per-wallet, paid)'}
+                                                            onClick={() => !locked && setRegistrarType(t)}
+                                                            title={locked ? 'ENSubRegistrar requires Pro or Business plan' : undefined}
+                                                            style={{ flex: 1, padding: '8px', background: registrarType === t ? `${accent}22` : 'var(--row-bg)', border: `1px solid ${registrarType === t ? accent + '66' : 'var(--card-border)'}`, color: locked ? 'var(--text-dim)' : registrarType === t ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: registrarType === t ? 'bold' : 'normal', cursor: locked ? 'not-allowed' : 'pointer', opacity: locked ? 0.55 : 1 }}>
+                                                            {t === 'open' ? '🔓 Open (free, no limits)' : locked ? '🔒 ENSub — Pro/Business' : '🔒 ENSub (1-per-wallet, paid)'}
                                                         </button>
-                                                    ))}
+                                                        )
+                                                    })}
                                                 </div>
 
                                                 {/* ENSub config */}
@@ -1549,9 +1563,17 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                                 {/* Step 1 — update resolver */}
                                 <div style={{ marginBottom: '12px', padding: '14px', borderRadius: '8px', background: 'var(--row-bg)', border: '1px solid var(--row-border)' }}>
-                                    <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '6px' }}>
-                                        Step 1 — Set ENS Resolver
-                                    </p>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', gap: '8px' }}>
+                                        <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', margin: 0 }}>
+                                            Step 1 — Set ENS Resolver
+                                        </p>
+                                        {tenant.plan !== 'business' && (
+                                            <a href={`/pricing?slug=${tenant.slug}`}
+                                                style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '2px 10px', textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
+                                                🔒 Business plan
+                                            </a>
+                                        )}
+                                    </div>
                                     <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '10px', lineHeight: '1.5' }}>
                                         Change the resolver for <code style={{ color: accent, fontSize: '0.75rem' }}>{tenant.ens_domain}</code> to the Durin L1Resolver on Ethereum mainnet.
                                         Skip this if you already did it.
@@ -1569,9 +1591,10 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     </code>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' as const }}>
                                         <button
-                                            onClick={handleSetResolver}
-                                            disabled={ensResolutionSaving}
-                                            style={{ padding: '7px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
+                                            onClick={tenant.plan === 'business' ? handleSetResolver : undefined}
+                                            disabled={ensResolutionSaving || tenant.plan !== 'business'}
+                                            title={tenant.plan !== 'business' ? 'On-chain ENS resolution requires a Business plan' : undefined}
+                                            style={{ padding: '7px 14px', background: tenant.plan !== 'business' ? 'var(--row-bg)' : `${accent}18`, border: `1px solid ${tenant.plan !== 'business' ? 'var(--card-border)' : accent + '44'}`, color: tenant.plan !== 'business' ? COLORS.dim : accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: (ensResolutionSaving || tenant.plan !== 'business') ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
                                             {ensResolutionSaving && ensResolutionStep.includes('resolver') ? `⟳ ${ensResolutionStep}` : 'Set resolver (mainnet tx)'}
                                         </button>
                                         <a href={`https://app.ens.domains/${tenant.ens_domain}`} target="_blank" rel="noreferrer"
