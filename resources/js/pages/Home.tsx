@@ -73,6 +73,8 @@ const plans = [
         color: 'rgba(255,255,255,0.08)',
         features: [
             '50 total claims',
+            'Gasless offchain minting',
+            '1 L2 chain (open registrar)',
             'Open or NFT gate',
             'Custom logo & accent colour',
             'ENSub badge shown',
@@ -88,6 +90,9 @@ const plans = [
         color: `${ACCENT}33`,
         features: [
             '500 total claims',
+            'Gasless offchain minting',
+            'All 8 L2 chains (Base · OP · Arb · Polygon · Linea · Scroll · Celo · World Chain)',
+            'ENSub registrar — set price, treasury & mint limits',
             'All gate types (NFT, token, allowlist)',
             'No ENSub badge',
             'Embeddable claim widget',
@@ -104,6 +109,9 @@ const plans = [
         color: 'rgba(0,136,255,0.25)',
         features: [
             'Unlimited claims (up to 10k)',
+            'Gasless offchain minting',
+            'All 8 L2 chains + ENSub registrar',
+            'On-chain ENS resolution via Durin L1Resolver',
             'All gate types (NFT, token, allowlist)',
             'No ENSub badge',
             'Embeddable claim widget',
@@ -315,18 +323,18 @@ export default function Home() {
                     {[
                         {
                             num: '01',
-                            title: 'Verify ownership',
-                            desc: 'Connect your wallet. We check on-chain that you own the ENS domain — no trust required.',
+                            title: 'Verify & configure',
+                            desc: 'Connect your wallet — we check on-chain that you own the ENS domain. Set your gate type (open, NFT, token, allowlist), logo, and accent colour.',
                         },
                         {
                             num: '02',
-                            title: 'Configure & brand',
-                            desc: 'Choose eligibility rules (open, NFT-gated, token-gated), set your accent colour and logo.',
+                            title: 'Add L2 chains (optional)',
+                            desc: 'Deploy an L2Registry + ENSub registrar on any supported chain in one click — Base, Optimism, Arbitrum, Polygon, Linea, Scroll, Celo, or World Chain. Set a mint price, treasury address, and per-wallet limits.',
                         },
                         {
                             num: '03',
-                            title: 'Share the link',
-                            desc: 'Your claim page is instantly live at ensub.org/claim/yourname. Share it and watch subdomains get claimed.',
+                            title: 'Share & watch it grow',
+                            desc: 'Your page is live at ensub.org/claim/yourname. Community members claim gaslessly via Namestone or mint an on-chain NFT on any chain you configured.',
                         },
                     ].map(step => (
                         <div key={step.num} style={card()}>
