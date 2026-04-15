@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
+import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, useReadContract, createConfig, http } from 'wagmi'
+import { readContract } from '@wagmi/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import {
@@ -35,7 +36,7 @@ interface Tenant {
     chains: ChainOption[]
 }
 
-// Minimal ABI for Durin L2Registrar register function
+// ABI covers both open L2Registrar and ENSubRegistrar (superset)
 const REGISTRAR_ABI = [
     {
         name: 'register',
@@ -47,6 +48,9 @@ const REGISTRAR_ABI = [
         ],
         outputs: [],
     },
+    // ENSubRegistrar extras — gracefully absent on open registrar
+    { name: 'price',       type: 'function', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
+    { name: 'canRegister', type: 'function', stateMutability: 'view', inputs: [{ name: 'wallet', type: 'address' }], outputs: [{ name: '', type: 'bool' }] },
 ] as const
 
 // Map chain IDs to wagmi chain objects and display icons
@@ -177,6 +181,23 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     const activeChains = tenant.chains ?? []
     const isL2 = selectedChain !== null
 
+    // Read price + canRegister from ENSubRegistrar (returns undefined on old open registrar — treated as 0 / true)
+    const { data: mintPrice } = useReadContract({
+        address: selectedChain?.registrar_address as `0x${string}` | undefined,
+        abi: REGISTRAR_ABI,
+        functionName: 'price',
+        query: { enabled: !!selectedChain?.registrar_address },
+    })
+    const { data: canRegisterResult } = useReadContract({
+        address: selectedChain?.registrar_address as `0x${string}` | undefined,
+        abi: REGISTRAR_ABI,
+        functionName: 'canRegister',
+        args: address ? [address as `0x${string}`] : undefined,
+        query: { enabled: !!selectedChain?.registrar_address && !!address },
+    })
+    // If canRegister returns false → wallet already owns a subdomain on this chain
+    const walletBlocked = canRegisterResult === false
+
     useEffect(() => {
         if (!address) return
         fetch(`/api/claim/${tenant.slug}/mine?address=${address}`)
@@ -243,6 +264,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 abi: REGISTRAR_ABI,
                 functionName: 'register',
                 args: [name, address as `0x${string}`],
+                value: mintPrice ?? 0n,
                 chainId: targetChainId,
             })
             const fullName = `${name}.${tenant.ens_domain}`
@@ -273,11 +295,22 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
             if (chainId !== targetChainId) {
                 await switchChain({ chainId: targetChainId })
             }
+            // Read price from ENSubRegistrar (0n if old open registrar or call fails)
+            let chainMintPrice = 0n
+            try {
+                chainMintPrice = await readContract(wagmiConfig, {
+                    address: chain.registrar_address as `0x${string}`,
+                    abi: REGISTRAR_ABI,
+                    functionName: 'price',
+                    chainId: targetChainId,
+                }) as bigint
+            } catch {}
             const txHash = await writeContractAsync({
                 address: chain.registrar_address as `0x${string}`,
                 abi: REGISTRAR_ABI,
                 functionName: 'register',
                 args: [subdomain, address as `0x${string}`],
+                value: chainMintPrice,
                 chainId: targetChainId,
             })
             setMintedChains(prev => new Set([...prev, targetChainId]))
@@ -539,26 +572,40 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
 
             {status === 'error' && <p style={{ color: '#ff4444', fontSize: '0.875rem' }}>{message}</p>}
 
+            {/* Wallet blocked by 1-per-wallet limit */}
+            {walletBlocked && isL2 && (
+                <p style={{ color: '#ffaa00', fontSize: '0.82rem', textAlign: 'center', padding: '8px 12px', background: 'rgba(255,170,0,0.08)', borderRadius: '8px', border: '1px solid rgba(255,170,0,0.2)' }}>
+                    This wallet already owns a subdomain on {selectedChain!.chain_name}.
+                </p>
+            )}
+
+            {/* Mint price notice */}
+            {isL2 && mintPrice !== undefined && mintPrice > 0n && (
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    Mint fee: <strong style={{ color: 'var(--text)' }}>{(Number(mintPrice) / 1e18).toFixed(4)} ETH</strong>
+                </p>
+            )}
+
             <button
                 onClick={handleClaim}
-                disabled={status !== 'available'}
+                disabled={status !== 'available' || walletBlocked}
                 style={{
                     width: '100%', padding: '14px',
-                    background: status === 'available'
+                    background: status === 'available' && !walletBlocked
                         ? `linear-gradient(135deg, ${accent}, ${accent}cc)`
                         : 'var(--row-bg)',
-                    color: status === 'available' ? '#0a0a1a' : 'var(--text-dim)',
+                    color: status === 'available' && !walletBlocked ? '#0a0a1a' : 'var(--text-dim)',
                     border: 'none', borderRadius: '8px',
                     fontWeight: 'bold', fontSize: '0.9rem', letterSpacing: '0.08em',
-                    cursor: status === 'available' ? 'pointer' : 'not-allowed',
-                    boxShadow: status === 'available' ? `0 0 20px ${accent}50` : 'none',
+                    cursor: status === 'available' && !walletBlocked ? 'pointer' : 'not-allowed',
+                    boxShadow: status === 'available' && !walletBlocked ? `0 0 20px ${accent}50` : 'none',
                     transition: 'all 0.2s',
                 }}
             >
                 {status === 'claiming'
                     ? '⟳ MINTING...'
                     : isL2
-                        ? `MINT ON ${selectedChain!.chain_name.toUpperCase()}`
+                        ? `MINT ON ${selectedChain!.chain_name.toUpperCase()}${mintPrice && mintPrice > 0n ? ` · ${(Number(mintPrice) / 1e18).toFixed(4)} ETH` : ''}`
                         : 'CLAIM'}
             </button>
 

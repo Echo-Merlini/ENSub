@@ -52,6 +52,18 @@ After this, `subdomain.yourdomain.eth` resolves on-chain via CCIP-Read from the 
 
 > ⚠️ Switching to the L1Resolver disables Namestone offchain resolution — gasless-only claimants who haven't minted on an L2 will stop resolving in wallets/dApps.
 
+### L2 Cross-chain Sync (Phase 3)
+`SubnodeCreated` events are indexed from each L2Registry via `php artisan l2:sync`. Runs every 15 minutes via Laravel Scheduler (supervisord in Docker). Chunks `eth_getLogs` in 2 000-block windows, falls back to public RPC when Alchemy free-tier block-range limit is hit. Syncs wallet address, subdomain label, and chain ID into the `claims` table — so mints done directly on-chain (bypassing the claim page) appear in the admin panel.
+
+### ENSubRegistrar (Phase 4)
+A custom L2 registrar contract (`contracts/src/ENSubRegistrar.sol`) with:
+- **On-chain 1-per-wallet enforcement** — checks `registry.balanceOf(recipient) == 0` before allowing a mint
+- **Configurable mint price** — set in wei; collected to a treasury address (defaults to deployer)
+- **Pause / admin controls** — `setPaused`, `setPrice`, `setTreasury`, `setLimitToOne`, `transferOwnership`
+- **`canRegister(wallet)`** — view function for UI pre-checks
+
+The Manage page deploy flow offers a registrar type selector: **Open** (original Durin registrar, free/no limits) or **ENSub** (custom registrar with the controls above). The Claim page reads `price()` from the registrar and passes the correct `value` with the mint transaction; it also calls `canRegister()` to show an amber warning if the wallet is already blocked.
+
 ---
 
 ## Onboarding flow
@@ -85,11 +97,10 @@ After this, `subdomain.yourdomain.eth` resolves on-chain via CCIP-Read from the 
 
 ## Known limitations / Next
 
-- **L2 1-per-wallet is UI-only** — the L2Registrar contract is open; anyone can call `register()` directly and bypass the UI check. Needs a contract-level guard (custom registrar with on-chain duplicate check) for strict enforcement.
-- **Revoke doesn't burn L2 NFT** — the Manage page Revoke button removes the Namestone offchain record only; it cannot burn the on-chain L2 NFT held by the claimant.
-- **No cross-chain sync** — L2 mint events (`NameRegistered`) are not indexed. If a user mints on L2 directly (bypassing the claim page), it won't appear in the claims list. Phase 3 goal: index events via Alchemy and sync to DB.
+- **Revoke doesn't burn L2 NFT** — neither the Durin L2Registry nor L2Registrar has a burn/delete function. Revoke on the Manage page removes the Namestone offchain record only; the on-chain NFT stays. Requires a custom registry with a burn function (Phase 4+).
 - **L2-only claimants** — if a user mints on L2 without doing the offchain step, there's no Namestone record. Subdomain resolves on-chain only after the L1Resolver phase is done.
-- **Open registrar** — current L2Registrar is free/open. No pricing, expiry, or gating at the contract level. Requires a custom registrar for paid or gated L2 minting.
+- **ENSubRegistrar not yet deployed for pixelgoblins.eth** — existing chains still use the open L2Registrar. Redeploy via Manage page (⚙ Fix) with the ENSub type selected to upgrade.
+- **Expiry/renewal** — ENSubRegistrar has no expiry. Permanent mints only. Future work if needed.
 
 ---
 

@@ -1,7 +1,7 @@
 # Durin Integration
 
 **Goal:** Add on-chain L2 subdomain minting (via Durin) as an optional add-on to ENSub's existing offchain (Namestone) flow.  
-**Status:** ✅ Phase 1 + Phase 2 done — Phase 3 pending
+**Status:** ✅ Phase 1 + Phase 2 + Phase 3 + Phase 4 done
 
 ---
 
@@ -100,22 +100,33 @@ minted_chains      JSON nullable  — array of chain IDs where this wallet has m
 
 ---
 
-### ⬜ Phase 3 — Cross-chain Claims Sync
+### ✅ Phase 3 — Cross-chain Claims Sync
 **Goal:** Index on-chain L2 mints so they appear in the claims list even if the user bypassed the claim page.
 
-- [ ] Index `NameRegistered` events from each tenant's L2Registry via Alchemy webhooks or polling
-- [ ] Sync to `claims` table (create record if missing, update `minted_chains`)
-- [ ] Revoke = call `L2Registry.burn(tokenId)` on the correct L2 chain (owner-gated)
+- [x] `SyncL2Mints` artisan command — indexes `SubnodeCreated(bytes32,bytes,address)` events from each tenant's L2Registry
+- [x] Runs every 15 min via Laravel Scheduler (supervisord in Docker)
+- [x] Chunks `eth_getLogs` in 2 000-block windows; fallback from Alchemy (free tier block-range limit) to public RPC (for-loop fix — foreach iterates a copy, appended URLs ignored)
+- [x] `last_synced_block` column on `tenant_chains` — tracks progress per chain
+- [x] Manual trigger: POST /api/manage/{slug}/chains/sync → `TenantChainController::sync()`
+- [x] "⟳ Sync mints" button in Manage page chains header
+- ⚠️ Revoke still offchain-only — neither L2Registry nor L2Registrar has a burn function in current Durin contracts
 
 ---
 
-### ⬜ Phase 4 — Registrar Upgrades
+### ✅ Phase 4 — Registrar Upgrades
 **Goal:** Contract-level enforcement and paid/gated minting.
 
-- [ ] Custom L2Registrar with on-chain 1-per-wallet check
-- [ ] Paid registrar: configurable mint price, treasury address
-- [ ] Expiry support: subdomain renewal flow
-- [ ] Gate at contract level: NFT/token-gated minting matching the tenant's gate config
+- [x] `contracts/src/ENSubRegistrar.sol` — custom registrar (solc 0.8.20, optimizer 200, compiled with Foundry)
+  - On-chain 1-per-wallet: `registry.balanceOf(recipient) == 0` check
+  - Configurable price (wei), treasury address, pause
+  - Admin: `setPrice`, `setTreasury`, `setLimitToOne`, `setPaused`, `transferOwnership`
+  - `canRegister(wallet)` view for UI pre-checks
+- [x] Bytecode embedded in Manage.tsx as `ENSUB_REGISTRAR_BYTECODE`
+- [x] Deploy flow: registrar type toggle (🔓 Open / 🔒 ENSub) with price/treasury/limitToOne config panel
+- [x] Claim.tsx: reads `price()` + `canRegister()` via wagmi hooks; passes `value` to register; shows price in button label and wallet-blocked warning
+- ⬜ Expiry/renewal — not implemented
+- ⬜ Existing pixelgoblins.eth chains still use open registrar — redeploy via Manage ⚙ Fix to upgrade
+- ⬜ In-app admin UI for setPrice/setTreasury on already-deployed ENSubRegistrars
 
 ---
 
@@ -125,4 +136,6 @@ minted_chains      JSON nullable  — array of chain IDs where this wallet has m
 - **keccak256 vs SHA3-256:** ENS namehash uses pre-standard Keccak (not NIST SHA3). PHP `hash('sha3-256')` is wrong — must use `kornrunner/Keccak::hash()`.
 - **L2 TLD limitation:** `.base`, `.op` etc. are separate name systems not accessible through Durin. L2 chains are storage/NFT layers only; names stay `.eth`.
 - **deployContract vs sendTransaction:** wagmi's `sendTransaction` without explicit `account` doesn't produce a contract creation tx (contractAddress = null). Must use `deployContract` with `account: address`.
-- **Open registrar:** Current L2Registrar is free/open — anyone can call `register()` directly. 1-per-wallet is UI-only until Phase 4.
+- **Open registrar (resolved Phase 4):** ENSubRegistrar enforces 1-per-wallet on-chain via `balanceOf`. Existing chains still use open registrar until redeployed via Manage ⚙ Fix.
+- **No burn function in Durin:** Neither L2Registry nor L2Registrar has a burn/delete method. Revoke is offchain-only. A custom registry with burn would be needed for full on-chain revoke.
+- **foreach vs for (PHP bug):** PHP `foreach` iterates a copy — appending to `$urls` inside the loop has no effect. `SyncL2Mints::getLogs()` uses `for ($i = 0; $i < count($urls); $i++)` so the public RPC fallback actually fires.

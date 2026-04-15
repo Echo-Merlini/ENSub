@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
-import { waitForTransactionReceipt, deployContract } from '@wagmi/core'
+import { waitForTransactionReceipt, deployContract, readContract } from '@wagmi/core'
 import { decodeEventLog, namehash } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
@@ -76,6 +76,35 @@ const L2_REGISTRAR_ABI = [
         inputs: [{ name: 'label', type: 'string' }, { name: 'owner', type: 'address' }],
         outputs: [],
     },
+] as const
+
+// Compiled ENSubRegistrar bytecode — 1-per-wallet enforcement, configurable price, treasury
+// Source: contracts/src/ENSubRegistrar.sol (compiled with solc 0.8.20, optimizer 200 runs)
+const ENSUB_REGISTRAR_BYTECODE = '0x60e060405234801561000f575f80fd5b50604051610dae380380610dae83398101604081905261002e9161012b565b6001600160a01b03841660808190526001600160401b03461660a052604080516279834560e91b8152905163f3068a00916004808201926020929091908290030181865afa158015610082573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906100a6919061017b565b60c0525f80546001600160a01b031916331790556001600160a01b038316156100cf57826100d1565b335b600180546001600160a01b0319166001600160a01b03929092169190911790556002919091556003805460ff1916911515919091179055506101929050565b80516001600160a01b0381168114610126575f80fd5b919050565b5f805f806080858703121561013e575f80fd5b61014785610110565b935061015560208601610110565b92506040850151915060608501518015158114610170575f80fd5b939692955090935050565b5f6020828403121561018b575f80fd5b5051919050565b60805160a05160c051610bc16101ed5f395f818161030b0152818161056d015281816106e5015261074201525f61025e01525f81816101ee0152818161049e01528181610540015281816106b801526107f00152610bc15ff3fe6080604052600436106100e4575f3560e01c80637b10399911610087578063a035b1fe11610057578063a035b1fe14610299578063f0f44260146102bc578063f2fde38b146102db578063faff50a8146102fa575f80fd5b80637b103999146101dd5780638da5cb5b1461021057806391b7f5ed1461022e5780639a8a05921461024d575f80fd5b8063320d46d4116100c2578063320d46d41461013b5780634ac7ee931461016f5780635c975abb1461018857806361d027b3146101a6575f80fd5b806313f5347e146100e857806316c38b3c146101095780631e59c52914610128575b5f80fd5b3480156100f3575f80fd5b506101076101023660046109db565b61032d565b005b348015610114575f80fd5b506101076101233660046109db565b61039f565b610107610136366004610a18565b610412565b348015610146575f80fd5b5061015a610155366004610a92565b6107a9565b60405190151581526020015b60405180910390f35b34801561017a575f80fd5b5060035461015a9060ff1681565b348015610193575f80fd5b5060035461015a90610100900460ff1681565b3480156101b1575f80fd5b506001546101c5906001600160a01b031681565b6040516001600160a01b039091168152602001610166565b3480156101e8575f80fd5b506101c57f000000000000000000000000000000000000000000000000000000000000000081565b34801561021b575f80fd5b505f546101c5906001600160a01b031681565b348015610239575f80fd5b50610107610248366004610aab565b610871565b348015610258575f80fd5b506102807f000000000000000000000000000000000000000000000000000000000000000081565b60405167ffffffffffffffff9091168152602001610166565b3480156102a4575f80fd5b506102ae60025481565b604051908152602001610166565b3480156102c7575f80fd5b506101076102d6366004610a92565b6108d0565b3480156102e6575f80fd5b506101076102f5366004610a92565b610948565b348015610305575f80fd5b506102ae7f000000000000000000000000000000000000000000000000000000000000000081565b5f546001600160a01b03163314610357576040516330cd747160e01b815260040160405180910390fd5b6003805460ff19168215159081179091556040519081527f15fd609448f6acc8ea38dc2cc399e6962d6ee3125d99735eaabb2060b14d902f906020015b60405180910390a150565b5f546001600160a01b031633146103c9576040516330cd747160e01b815260040160405180910390fd5b600380548215156101000261ff00199091161790556040517f0e2fb031ee032dc02d8011dc50b816eb450cf856abd8261680dac74f72165bd29061039490831515815260200190565b600354610100900460ff161561043b5760405163d4bd01c560e01b815260040160405180910390fd5b6002543410156104705760025460405163b99e2ab760e01b815234600482015260248101919091526044015b60405180910390fd5b60035460ff16801561050b57506040516370a0823160e01b81526001600160a01b0382811660048301525f917f0000000000000000000000000000000000000000000000000000000000000000909116906370a0823190602401602060405180830381865afa1580156104e5573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906105099190610ac2565b115b156105295760405163c07c0bb360e01b815260040160405180910390fd5b604051631e56ca5360e01b81526001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001690631e56ca5390610599907f00000000000000000000000000000000000000000000000000000000000000009087908790600401610b01565b602060405180830381865afa1580156105b4573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906105d89190610b23565b6105f9578282604051632f880e6360e01b8152600401610467929190610b3e565b34156106a1576001546040515f916001600160a01b03169034908381818185875af1925050503d805f8114610649576040519150601f19603f3d011682016040523d82523d5f602084013e61064e565b606091505b505090508061069f5760405162461bcd60e51b815260206004820152601860248201527f5472656173757279207472616e73666572206661696c656400000000000000006044820152606401610467565b505b604051636292a6bf60e01b81526001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001690636292a6bf90610713907f000000000000000000000000000000000000000000000000000000000000000090879087908790600401610b59565b5f604051808303815f87803b15801561072a575f80fd5b505af115801561073c573d5f803e3d5ffd5b505050507f0000000000000000000000000000000000000000000000000000000000000000816001600160a01b03167f7b6f4a3bbc77d87f5653f343de9896714a1cfa0850309b766de321c9d78cf933858560405161079c929190610b3e565b60405180910390a3505050565b6003545f90610100900460ff16156107c257505f919050565b60035460ff16801561085d57506040516370a0823160e01b81526001600160a01b0383811660048301525f917f0000000000000000000000000000000000000000000000000000000000000000909116906370a0823190602401602060405180830381865afa158015610837573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061085b9190610ac2565b115b1561086957505f919050565b506001919050565b5f546001600160a01b0316331461089b576040516330cd747160e01b815260040160405180910390fd5b60028190556040518181527f6bfd5e75539a9d2626425a2e2922675256b219fe546d63dad56011759b9a2f6690602001610394565b5f546001600160a01b031633146108fa576040516330cd747160e01b815260040160405180910390fd5b600180546001600160a01b0319166001600160a01b0383169081179091556040519081527f3c864541ef71378c6229510ed90f376565ee42d9c5e0904a984a9e863e6db44f90602001610394565b5f546001600160a01b03163314610972576040516330cd747160e01b815260040160405180910390fd5b5f80546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a35f80546001600160a01b0319166001600160a01b0392909216919091179055565b80151581146109d8575f80fd5b50565b5f602082840312156109eb575f80fd5b81356109f6816109cb565b9392505050565b80356001600160a01b0381168114610a13575f80fd5b919050565b5f805f60408486031215610a2a575f80fd5b833567ffffffffffffffff80821115610a41575f80fd5b818601915086601f830112610a54575f80fd5b813581811115610a62575f80fd5b876020828501011115610a73575f80fd5b602092830195509350610a8991860190506109fd565b90509250925092565b5f60208284031215610aa2575f80fd5b6109f6826109fd565b5f60208284031215610abb575f80fd5b5035919050565b5f60208284031215610ad2575f80fd5b5051919050565b81835281816020850137505f828201602090810191909152601f909101601f19169091010190565b838152604060208201525f610b1a604083018486610ad9565b95945050505050565b5f60208284031215610b33575f80fd5b81516109f6816109cb565b602081525f610b51602083018486610ad9565b949350505050565b848152606060208201525f610b72606083018587610ad9565b905060018060a01b03831660408301529594505050505056fea26469706673582212202bf4293c554713d7006e3e39ecd3e2d21d24ffb2828842b1879f140a29da4be964736f6c63430008140033' as const
+
+const ENSUB_REGISTRAR_ABI = [
+    {
+        name: 'constructor',
+        type: 'constructor',
+        stateMutability: 'nonpayable',
+        inputs: [
+            { name: '_registry',   type: 'address' },
+            { name: '_treasury',   type: 'address' },
+            { name: '_price',      type: 'uint256' },
+            { name: '_limitToOne', type: 'bool' },
+        ],
+    },
+    { name: 'register',       type: 'function', stateMutability: 'payable',    inputs: [{ name: 'label', type: 'string' }, { name: 'recipient', type: 'address' }], outputs: [] },
+    { name: 'canRegister',    type: 'function', stateMutability: 'view',       inputs: [{ name: 'wallet', type: 'address' }], outputs: [{ name: '', type: 'bool' }] },
+    { name: 'setPrice',       type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_price', type: 'uint256' }], outputs: [] },
+    { name: 'setTreasury',    type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_treasury', type: 'address' }], outputs: [] },
+    { name: 'setLimitToOne',  type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_enabled', type: 'bool' }], outputs: [] },
+    { name: 'setPaused',      type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_paused', type: 'bool' }], outputs: [] },
+    { name: 'price',          type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ name: '', type: 'uint256' }] },
+    { name: 'treasury',       type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ name: '', type: 'address' }] },
+    { name: 'limitToOne',     type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ name: '', type: 'bool' }] },
+    { name: 'paused',         type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ name: '', type: 'bool' }] },
+    { name: 'owner',          type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ name: '', type: 'address' }] },
 ] as const
 
 const REGISTRY_ABI = [
@@ -247,6 +276,81 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [syncing, setSyncing] = useState(false)
     const [syncResult, setSyncResult] = useState('')
 
+    // Phase 4: registrar type for new deploy
+    const [registrarType, setRegistrarType] = useState<'open' | 'ensub'>('open')
+    const [ensubPrice, setEnsubPrice] = useState('0')           // ETH string, converted to wei on deploy
+    const [ensubTreasury, setEnsubTreasury] = useState('')      // blank → deployer wallet
+    const [ensubLimitToOne, setEnsubLimitToOne] = useState(true)
+
+    // Phase 4: per-chain registrar settings panel (for already-deployed ENSubRegistrar)
+    const [settingsChainId, setSettingsChainId] = useState<number | null>(null)
+    interface RegistrarSettings { price: string; treasury: string; limitToOne: boolean; paused: boolean; loading: boolean; saving: string; error: string }
+    const [registrarSettings, setRegistrarSettings] = useState<Record<number, RegistrarSettings>>({})
+
+    const openRegistrarSettings = async (ch: ChainEntry) => {
+        if (!ch.registrar_address) return
+        setSettingsChainId(ch.chain_id)
+        // Mark loading
+        setRegistrarSettings(prev => ({ ...prev, [ch.chain_id]: { price: '', treasury: '', limitToOne: true, paused: false, loading: true, saving: '', error: '' } }))
+        try {
+            const [price, treasury, limitToOne, paused] = await Promise.all([
+                readContract(wagmiConfig, { address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'price', chainId: ch.chain_id }).catch(() => null),
+                readContract(wagmiConfig, { address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'treasury', chainId: ch.chain_id }).catch(() => null),
+                readContract(wagmiConfig, { address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'limitToOne', chainId: ch.chain_id }).catch(() => null),
+                readContract(wagmiConfig, { address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'paused', chainId: ch.chain_id }).catch(() => null),
+            ])
+            if (price === null) {
+                // Not an ENSubRegistrar — open registrar doesn't have these functions
+                setRegistrarSettings(prev => ({ ...prev, [ch.chain_id]: { price: '', treasury: '', limitToOne: false, paused: false, loading: false, saving: '', error: 'Not an ENSubRegistrar (open registrar deployed — redeploy with ENSub type to enable settings)' } }))
+                return
+            }
+            setRegistrarSettings(prev => ({ ...prev, [ch.chain_id]: {
+                price:      (Number(price as bigint) / 1e18).toFixed(6).replace(/\.?0+$/, '') || '0',
+                treasury:   (treasury as string) ?? '',
+                limitToOne: (limitToOne as boolean) ?? true,
+                paused:     (paused as boolean) ?? false,
+                loading:    false,
+                saving:     '',
+                error:      '',
+            }}))
+        } catch {
+            setRegistrarSettings(prev => ({ ...prev, [ch.chain_id]: { price: '0', treasury: '', limitToOne: true, paused: false, loading: false, saving: '', error: 'Failed to read contract — check chain connection' } }))
+        }
+    }
+
+    const updateRegistrarSetting = (chainId: number, field: keyof RegistrarSettings, value: any) =>
+        setRegistrarSettings(prev => ({ ...prev, [chainId]: { ...prev[chainId], [field]: value } }))
+
+    const handleRegistrarSave = async (ch: ChainEntry, action: 'price' | 'treasury' | 'limitToOne' | 'paused', overrideValue?: any) => {
+        const s = registrarSettings[ch.chain_id]
+        if (!s || !ch.registrar_address) return
+        updateRegistrarSetting(ch.chain_id, 'saving', action)
+        updateRegistrarSetting(ch.chain_id, 'error', '')
+        try {
+            if (currentChainId !== ch.chain_id) await switchChain({ chainId: ch.chain_id })
+            let txHash: `0x${string}`
+            if (action === 'price') {
+                const priceWei = BigInt(Math.round(parseFloat(s.price || '0') * 1e18))
+                txHash = await writeContractAsync({ address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'setPrice', args: [priceWei], chainId: ch.chain_id })
+            } else if (action === 'treasury') {
+                txHash = await writeContractAsync({ address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'setTreasury', args: [s.treasury as `0x${string}`], chainId: ch.chain_id })
+            } else if (action === 'limitToOne') {
+                const val = overrideValue !== undefined ? overrideValue : s.limitToOne
+                txHash = await writeContractAsync({ address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'setLimitToOne', args: [val], chainId: ch.chain_id })
+                if (overrideValue !== undefined) updateRegistrarSetting(ch.chain_id, 'limitToOne', val)
+            } else {
+                const val = overrideValue !== undefined ? overrideValue : s.paused
+                txHash = await writeContractAsync({ address: ch.registrar_address as `0x${string}`, abi: ENSUB_REGISTRAR_ABI, functionName: 'setPaused', args: [val], chainId: ch.chain_id })
+                if (overrideValue !== undefined) updateRegistrarSetting(ch.chain_id, 'paused', val)
+            }
+            await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: ch.chain_id })
+        } catch (e: any) {
+            updateRegistrarSetting(ch.chain_id, 'error', e.shortMessage ?? e.message ?? 'Transaction failed')
+        } finally {
+            updateRegistrarSetting(ch.chain_id, 'saving', '')
+        }
+    }
+
     // Phase 2: ENS on-chain resolution
     const [ensResolutionSaving, setEnsResolutionSaving] = useState(false)
     const [ensResolutionStep, setEnsResolutionStep] = useState('')
@@ -313,13 +417,27 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 await switchChain({ chainId: ch.chain_id })
             }
             setDeployStep('1/2 Deploying registrar…')
-            const deployTxHash = await deployContract(wagmiConfig, {
-                abi: L2_REGISTRAR_ABI,
-                bytecode: L2_REGISTRAR_BYTECODE,
-                args: [ch.registry_address as `0x${string}`],
-                account: address as `0x${string}`,
-                chainId: ch.chain_id,
-            })
+            const rePriceWei = registrarType === 'ensub'
+                ? BigInt(Math.round(parseFloat(ensubPrice || '0') * 1e18))
+                : 0n
+            const reTreasury = (registrarType === 'ensub' && ensubTreasury.trim())
+                ? ensubTreasury.trim() as `0x${string}`
+                : (address as `0x${string}`)
+            const deployTxHash = registrarType === 'ensub'
+                ? await deployContract(wagmiConfig, {
+                    abi: ENSUB_REGISTRAR_ABI,
+                    bytecode: ENSUB_REGISTRAR_BYTECODE,
+                    args: [ch.registry_address as `0x${string}`, reTreasury, rePriceWei, ensubLimitToOne],
+                    account: address as `0x${string}`,
+                    chainId: ch.chain_id,
+                })
+                : await deployContract(wagmiConfig, {
+                    abi: L2_REGISTRAR_ABI,
+                    bytecode: L2_REGISTRAR_BYTECODE,
+                    args: [ch.registry_address as `0x${string}`],
+                    account: address as `0x${string}`,
+                    chainId: ch.chain_id,
+                })
             const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: ch.chain_id })
             const registrarAddr = deployReceipt.contractAddress
             if (!registrarAddr) throw new Error('No contract address in receipt')
@@ -396,15 +514,29 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 setNewRegistry(registryAddr)
             }
 
-            // Step 2: Deploy L2Registrar (open, free) pointing at the registry
+            // Step 2: Deploy registrar pointing at the registry
             setDeployStep(`${newRegistry ? '1' : '2'}/2 Deploying registrar…`)
-            const deployTxHash = await deployContract(wagmiConfig, {
-                abi: L2_REGISTRAR_ABI,
-                bytecode: L2_REGISTRAR_BYTECODE,
-                args: [registryAddr as `0x${string}`],
-                account: address as `0x${string}`,
-                chainId: newChainId,
-            })
+            const priceWei = registrarType === 'ensub'
+                ? BigInt(Math.round(parseFloat(ensubPrice || '0') * 1e18))
+                : 0n
+            const treasuryAddr = (registrarType === 'ensub' && ensubTreasury.trim())
+                ? ensubTreasury.trim() as `0x${string}`
+                : (address as `0x${string}`)
+            const deployTxHash = registrarType === 'ensub'
+                ? await deployContract(wagmiConfig, {
+                    abi: ENSUB_REGISTRAR_ABI,
+                    bytecode: ENSUB_REGISTRAR_BYTECODE,
+                    args: [registryAddr as `0x${string}`, treasuryAddr, priceWei, ensubLimitToOne],
+                    account: address as `0x${string}`,
+                    chainId: newChainId,
+                })
+                : await deployContract(wagmiConfig, {
+                    abi: L2_REGISTRAR_ABI,
+                    bytecode: L2_REGISTRAR_BYTECODE,
+                    args: [registryAddr as `0x${string}`],
+                    account: address as `0x${string}`,
+                    chainId: newChainId,
+                })
             const deployReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: deployTxHash, chainId: newChainId })
             const registrarAddr = deployReceipt.contractAddress
             if (!registrarAddr) throw new Error('Registrar deployment failed — no contract address')
@@ -985,31 +1117,113 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                             {/* Active chains */}
                             {chains.map(ch => {
                                 const meta = DURIN_CHAINS.find(c => c.id === ch.chain_id)
+                                const settingsOpen = settingsChainId === ch.chain_id
+                                const s = registrarSettings[ch.chain_id]
                                 return (
-                                    <div key={ch.chain_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--row-border)', gap: '8px' }}>
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>
-                                            {meta?.icon ?? '🔗'} {ch.chain_name}
-                                        </span>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={ch.enabled}
-                                                onChange={e => handleToggleChain(ch.chain_id, e.target.checked)}
-                                            />
-                                            {ch.enabled ? 'Enabled' : 'Disabled'}
-                                        </label>
-                                        <button
-                                            onClick={() => handleRedeployRegistrar(ch)}
-                                            disabled={chainSaving}
-                                            title="Redeploy L2Registrar and re-authorize it on the registry (fixes minting)"
-                                            style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '5px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '3px 9px', opacity: chainSaving ? 0.5 : 1, fontWeight: 'bold', whiteSpace: 'nowrap' as const }}>
-                                            {chainSaving && deployStep ? deployStep : '⚙ Fix'}
-                                        </button>
-                                        <button
-                                            onClick={() => handleRemoveChain(ch.chain_id)}
-                                            style={{ fontSize: '0.75rem', color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
-                                            ✕
-                                        </button>
+                                    <div key={ch.chain_id} style={{ borderBottom: '1px solid var(--row-border)' }}>
+                                        {/* Chain row */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', gap: '8px' }}>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>
+                                                {meta?.icon ?? '🔗'} {ch.chain_name}
+                                            </span>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={ch.enabled}
+                                                    onChange={e => handleToggleChain(ch.chain_id, e.target.checked)}
+                                                />
+                                                {ch.enabled ? 'Enabled' : 'Disabled'}
+                                            </label>
+                                            <button
+                                                onClick={() => {
+                                                    if (settingsOpen) { setSettingsChainId(null) }
+                                                    else { openRegistrarSettings(ch) }
+                                                }}
+                                                title="Configure ENSubRegistrar settings (price, treasury, 1-per-wallet, pause)"
+                                                style={{ fontSize: '0.75rem', color: settingsOpen ? accent : 'var(--text-muted)', background: settingsOpen ? `${accent}18` : 'var(--row-bg)', border: `1px solid ${settingsOpen ? accent + '44' : 'var(--row-border)'}`, borderRadius: '5px', cursor: 'pointer', padding: '3px 9px', whiteSpace: 'nowrap' as const }}>
+                                                ⚙ Settings
+                                            </button>
+                                            <button
+                                                onClick={() => handleRedeployRegistrar(ch)}
+                                                disabled={chainSaving}
+                                                title="Redeploy L2Registrar and re-authorize it on the registry"
+                                                style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '5px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '3px 9px', opacity: chainSaving ? 0.5 : 1, fontWeight: 'bold', whiteSpace: 'nowrap' as const }}>
+                                                {chainSaving && deployStep ? deployStep : '⚙ Fix'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleRemoveChain(ch.chain_id)}
+                                                style={{ fontSize: '0.75rem', color: '#ff4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        {/* ENSubRegistrar settings panel */}
+                                        {settingsOpen && (
+                                            <div style={{ margin: '0 0 10px', padding: '14px', background: 'var(--row-bg)', borderRadius: '8px', border: `1px solid ${accent}22`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                {s?.loading && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>⟳ Reading contract…</p>}
+                                                {s?.error && <p style={{ fontSize: '0.78rem', color: s.error.startsWith('Not') ? '#f59e0b' : '#ff4444', margin: 0 }}>{s.error}</p>}
+
+                                                {s && !s.loading && !s.error && (
+                                                    <>
+                                                        {/* Price */}
+                                                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mint price (ETH, 0 = free)</span>
+                                                                <input
+                                                                    style={inputStyle}
+                                                                    type="number" min="0" step="0.001"
+                                                                    value={s.price}
+                                                                    onChange={e => updateRegistrarSetting(ch.chain_id, 'price', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleRegistrarSave(ch, 'price')}
+                                                                disabled={!!s.saving}
+                                                                style={{ padding: '8px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '7px', fontSize: '0.78rem', fontWeight: 'bold', cursor: s.saving ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
+                                                                {s.saving === 'price' ? '⟳ Saving…' : 'Set price'}
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Treasury */}
+                                                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Treasury address</span>
+                                                                <input
+                                                                    style={inputStyle}
+                                                                    placeholder="0x…"
+                                                                    value={s.treasury}
+                                                                    onChange={e => updateRegistrarSetting(ch.chain_id, 'treasury', e.target.value)}
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleRegistrarSave(ch, 'treasury')}
+                                                                disabled={!!s.saving}
+                                                                style={{ padding: '8px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '7px', fontSize: '0.78rem', fontWeight: 'bold', cursor: s.saving ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' as const }}>
+                                                                {s.saving === 'treasury' ? '⟳ Saving…' : 'Set treasury'}
+                                                            </button>
+                                                        </div>
+
+                                                        {/* 1-per-wallet + Pause — side by side */}
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button
+                                                                onClick={() => handleRegistrarSave(ch, 'limitToOne', !s.limitToOne)}
+                                                                disabled={!!s.saving}
+                                                                style={{ flex: 1, padding: '8px', background: s.limitToOne ? `${accent}18` : 'var(--card-bg)', border: `1px solid ${s.limitToOne ? accent + '55' : 'var(--card-border)'}`, color: s.limitToOne ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: 'bold', cursor: s.saving ? 'not-allowed' : 'pointer' }}>
+                                                                {s.saving === 'limitToOne' ? '⟳ Saving…' : s.limitToOne ? '✓ 1-per-wallet: On' : '1-per-wallet: Off'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRegistrarSave(ch, 'paused', !s.paused)}
+                                                                disabled={!!s.saving}
+                                                                style={{ flex: 1, padding: '8px', background: s.paused ? 'rgba(255,68,68,0.12)' : 'var(--card-bg)', border: `1px solid ${s.paused ? 'rgba(255,68,68,0.4)' : 'var(--card-border)'}`, color: s.paused ? '#ff4444' : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: 'bold', cursor: s.saving ? 'not-allowed' : 'pointer' }}>
+                                                                {s.saving === 'paused' ? '⟳ Saving…' : s.paused ? '⏸ Paused' : '▶ Active'}
+                                                            </button>
+                                                        </div>
+
+                                                        {s.error && <p style={{ fontSize: '0.75rem', color: '#ff4444', margin: 0 }}>{s.error}</p>}
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}
@@ -1044,6 +1258,61 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                             onChange={e => setNewRegistry(e.target.value)}
                                         />
                                     </div>
+
+                                    {/* Registrar type selector */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Registrar type</span>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {(['open', 'ensub'] as const).map(t => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setRegistrarType(t)}
+                                                    style={{ flex: 1, padding: '8px', background: registrarType === t ? `${accent}22` : 'var(--row-bg)', border: `1px solid ${registrarType === t ? accent + '66' : 'var(--card-border)'}`, color: registrarType === t ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: registrarType === t ? 'bold' : 'normal', cursor: 'pointer' }}>
+                                                    {t === 'open' ? '🔓 Open (free, no limits)' : '🔒 ENSub (1-per-wallet, paid)'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* ENSub registrar config — only shown when type = ensub */}
+                                    {registrarType === 'ensub' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--row-bg)', borderRadius: '8px', border: '1px solid var(--row-border)' }}>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                                                ENSubRegistrar enforces 1 mint per wallet on-chain and optionally charges a fee.
+                                            </p>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mint price (ETH, 0 = free)</span>
+                                                    <input
+                                                        style={inputStyle}
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.001"
+                                                        placeholder="0"
+                                                        value={ensubPrice}
+                                                        onChange={e => setEnsubPrice(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', justifyContent: 'flex-end' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>1 per wallet</span>
+                                                    <button
+                                                        onClick={() => setEnsubLimitToOne(v => !v)}
+                                                        style={{ padding: '8px 14px', background: ensubLimitToOne ? `${accent}22` : 'var(--row-bg)', border: `1px solid ${ensubLimitToOne ? accent + '66' : 'var(--card-border)'}`, color: ensubLimitToOne ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                                                        {ensubLimitToOne ? '✓ On' : 'Off'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Treasury address (blank = your wallet)</span>
+                                                <input
+                                                    style={inputStyle}
+                                                    placeholder="0x… or leave blank to use deployer wallet"
+                                                    value={ensubTreasury}
+                                                    onChange={e => setEnsubTreasury(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Registrar address — auto-filled after deploy, or paste existing */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

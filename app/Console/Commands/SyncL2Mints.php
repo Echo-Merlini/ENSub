@@ -231,7 +231,9 @@ class SyncL2Mints extends Command
 
         // If using Alchemy and it fails with a block-range restriction (free tier),
         // transparently retry with the public RPC fallback.
-        foreach ($urls as $url) {
+        // NOTE: must use index-based loop — foreach iterates a copy and won't see appended URLs.
+        for ($i = 0; $i < count($urls); $i++) {
+            $url = $urls[$i];
             try {
                 $res   = Http::timeout(30)->post($url, $payload);
                 $error = $res->json('error');
@@ -241,7 +243,6 @@ class SyncL2Mints extends Command
                     // Alchemy free-tier block range limit — retry on public RPC
                     if (str_contains($msg, 'block range') || str_contains($msg, 'Free tier')) {
                         Log::info('SyncL2Mints: Alchemy block-range limit hit, falling back to public RPC');
-                        // Append public RPC as next attempt if not already queued
                         $chainId = $this->currentChainId;
                         if ($chainId && isset(self::PUBLIC_RPC[$chainId]) && !in_array(self::PUBLIC_RPC[$chainId], $urls)) {
                             $urls[] = self::PUBLIC_RPC[$chainId];
