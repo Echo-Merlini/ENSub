@@ -275,6 +275,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [error, setError] = useState('')
     const [claims, setClaims] = useState<ClaimEntry[]>(tenant.claims)
     const [revoking, setRevoking] = useState<number | null>(null)
+    const [claimsExpanded, setClaimsExpanded] = useState(false)
+    const [claimsSearch, setClaimsSearch] = useState('')
     const [linkCopied, setLinkCopied] = useState(false)
     const [embedCopied, setEmbedCopied] = useState(false)
 
@@ -950,79 +952,110 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                         )}
 
                         {/* Claims list */}
-                        <div style={card}>
-                            <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '16px' }}>
-                                Claimed subdomains
-                                <span style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: '0.8rem', marginLeft: '8px' }}>
-                                    ({claims.length})
-                                </span>
-                            </h2>
-                            {claims.length === 0 ? (
-                                <p style={{ color: COLORS.dim, fontSize: '0.85rem', textAlign: 'center', padding: '16px 0' }}>
-                                    No claims yet
-                                </p>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {claims.map(c => (
-                                        <div key={c.id} style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '10px 12px', borderRadius: '8px',
-                                            background: 'var(--row-bg)',
-                                            border: '1px solid var(--row-border)',
-                                            gap: '12px',
-                                        }}>
-                                            <div style={{ minWidth: 0, flex: 1 }}>
-                                                <p style={{ color: accent, fontSize: '0.875rem', fontWeight: 'bold',
-                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {c.full_name}
-                                                </p>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                                                    <span style={{ fontSize: '0.7rem', color: '#00c850', background: 'rgba(0,200,80,0.1)', border: '1px solid rgba(0,200,80,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
-                                                        Ξ ETH
-                                                    </span>
-                                                    {(c.minted_chains ?? []).map(cid => {
-                                                        const meta = DURIN_CHAINS.find(d => d.id === cid)
-                                                        return (
-                                                            <span key={cid} style={{ fontSize: '0.7rem', color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '3px', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                                                <ChainIcon chain={meta} size={12} /> {meta?.name ?? `Chain ${cid}`}
-                                                            </span>
-                                                        )
-                                                    })}
-                                                    <span style={{ color: COLORS.dim, fontSize: '0.7rem', fontFamily: 'monospace' }}>
-                                                        {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
-                                                        <span style={{ marginLeft: '6px' }}>{new Date(c.claimed_at).toLocaleDateString()}</span>
-                                                    </span>
+                        {(() => {
+                            const PAGE = 5
+                            const q = claimsSearch.trim().toLowerCase()
+                            const filtered = q
+                                ? claims.filter(c =>
+                                    c.full_name.toLowerCase().includes(q) ||
+                                    c.subdomain.toLowerCase().includes(q) ||
+                                    c.wallet_address.toLowerCase().includes(q)
+                                  )
+                                : claims
+                            const displayed = claimsExpanded ? filtered : filtered.slice(0, PAGE)
+                            const hasMore = filtered.length > PAGE
+                            return (
+                            <div style={card}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: claimsExpanded ? '10px' : '16px', gap: '8px', flexWrap: 'wrap' as const }}>
+                                    <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', margin: 0 }}>
+                                        Claimed subdomains
+                                        <span style={{ color: COLORS.muted, fontWeight: 'normal', fontSize: '0.8rem', marginLeft: '8px' }}>
+                                            ({claims.length})
+                                        </span>
+                                    </h2>
+                                    {claimsExpanded && (
+                                        <input
+                                            type="text"
+                                            placeholder="Search subdomain or wallet…"
+                                            value={claimsSearch}
+                                            onChange={e => setClaimsSearch(e.target.value)}
+                                            style={{ ...inputStyle, width: 'auto', flex: 1, minWidth: '160px', maxWidth: '260px', fontSize: '0.8rem', padding: '6px 10px' }}
+                                        />
+                                    )}
+                                </div>
+                                {claims.length === 0 ? (
+                                    <p style={{ color: COLORS.dim, fontSize: '0.85rem', textAlign: 'center', padding: '16px 0' }}>
+                                        No claims yet
+                                    </p>
+                                ) : (
+                                    <>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {displayed.map(c => (
+                                            <div key={c.id} style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                padding: '10px 12px', borderRadius: '8px',
+                                                background: 'var(--row-bg)', border: '1px solid var(--row-border)', gap: '12px',
+                                            }}>
+                                                <div style={{ minWidth: 0, flex: 1 }}>
+                                                    <p style={{ color: accent, fontSize: '0.875rem', fontWeight: 'bold',
+                                                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {c.full_name}
+                                                    </p>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                                        <span style={{ fontSize: '0.7rem', color: '#00c850', background: 'rgba(0,200,80,0.1)', border: '1px solid rgba(0,200,80,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
+                                                            Ξ ETH
+                                                        </span>
+                                                        {(c.minted_chains ?? []).map(cid => {
+                                                            const meta = DURIN_CHAINS.find(d => d.id === cid)
+                                                            return (
+                                                                <span key={cid} style={{ fontSize: '0.7rem', color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: '3px', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                                    <ChainIcon chain={meta} size={12} /> {meta?.name ?? `Chain ${cid}`}
+                                                                </span>
+                                                            )
+                                                        })}
+                                                        <span style={{ color: COLORS.dim, fontSize: '0.7rem', fontFamily: 'monospace' }}>
+                                                            {c.wallet_address.slice(0, 6)}…{c.wallet_address.slice(-4)}
+                                                            <span style={{ marginLeft: '6px' }}>{new Date(c.claimed_at).toLocaleDateString()}</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
+                                                    <button
+                                                        onClick={() => handleRevoke(c)}
+                                                        disabled={revoking === c.id}
+                                                        title={(c.minted_chains ?? []).length > 0 ? 'Removes offchain record only — L2 NFTs cannot be burned' : 'Remove this claim'}
+                                                        style={{
+                                                            padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold',
+                                                            background: 'transparent', border: '1px solid rgba(255,68,68,0.3)',
+                                                            color: revoking === c.id ? COLORS.dim : '#ff6666',
+                                                            cursor: revoking === c.id ? 'not-allowed' : 'pointer',
+                                                        }}>
+                                                        {revoking === c.id ? '...' : 'Revoke'}
+                                                    </button>
+                                                    {(c.minted_chains ?? []).length > 0 && (
+                                                        <span style={{ fontSize: '0.62rem', color: COLORS.dim, whiteSpace: 'nowrap' as const }}>offchain only</span>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
-                                                <button
-                                                    onClick={() => handleRevoke(c)}
-                                                    disabled={revoking === c.id}
-                                                    title={(c.minted_chains ?? []).length > 0 ? 'Removes offchain record only — L2 NFTs cannot be burned' : 'Remove this claim'}
-                                                    style={{
-                                                        padding: '5px 10px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 'bold',
-                                                        background: 'transparent',
-                                                        border: '1px solid rgba(255,68,68,0.3)',
-                                                        color: revoking === c.id ? COLORS.dim : '#ff6666',
-                                                        cursor: revoking === c.id ? 'not-allowed' : 'pointer',
-                                                    }}
-                                                >
-                                                    {revoking === c.id ? '...' : 'Revoke'}
-                                                </button>
-                                                {(c.minted_chains ?? []).length > 0 && (
-                                                    <span style={{ fontSize: '0.62rem', color: COLORS.dim, whiteSpace: 'nowrap' as const }}>
-                                                        offchain only
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                        ))}
+                                    </div>
+                                    {hasMore && (
+                                        <button
+                                            onClick={() => { setClaimsExpanded(e => !e); setClaimsSearch('') }}
+                                            style={{ marginTop: '10px', width: '100%', padding: '8px', background: 'var(--row-bg)', border: '1px solid var(--row-border)', borderRadius: '7px', color: COLORS.muted, fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                                            {claimsExpanded ? '▴ Show less' : `▾ Show all ${claims.length} claims`}
+                                        </button>
+                                    )}
+                                    {claimsExpanded && q && filtered.length === 0 && (
+                                        <p style={{ color: COLORS.dim, fontSize: '0.8rem', textAlign: 'center', padding: '12px 0', margin: 0 }}>
+                                            No claims match "{claimsSearch}"
+                                        </p>
+                                    )}
+                                    </>
+                                )}
+                            </div>
+                            )
+                        })()}
 
                         {/* Share */}
                         {(() => {
