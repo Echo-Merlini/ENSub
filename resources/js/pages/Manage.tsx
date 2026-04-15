@@ -1567,7 +1567,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         <p style={{ color: COLORS.text, fontSize: '0.85rem', fontWeight: 'bold', margin: 0 }}>
                                             Step 1 — Set ENS Resolver
                                         </p>
-                                        {tenant.plan !== 'business' && (
+                                        {!['pro','business'].includes(tenant.plan) && (
                                             <a href={`/pricing?slug=${tenant.slug}`}
                                                 style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '2px 10px', textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
                                                 🔒 Business plan
@@ -1592,9 +1592,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' as const }}>
                                         <button
                                             onClick={tenant.plan === 'business' ? handleSetResolver : undefined}
-                                            disabled={ensResolutionSaving || tenant.plan !== 'business'}
-                                            title={tenant.plan !== 'business' ? 'On-chain ENS resolution requires a Business plan' : undefined}
-                                            style={{ padding: '7px 14px', background: tenant.plan !== 'business' ? 'var(--row-bg)' : `${accent}18`, border: `1px solid ${tenant.plan !== 'business' ? 'var(--card-border)' : accent + '44'}`, color: tenant.plan !== 'business' ? COLORS.dim : accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: (ensResolutionSaving || tenant.plan !== 'business') ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
+                                            disabled={ensResolutionSaving || !['pro','business'].includes(tenant.plan)}
+                                            title={!['pro','business'].includes(tenant.plan) ? 'On-chain ENS resolution requires a Business plan' : undefined}
+                                            style={{ padding: '7px 14px', background: !['pro','business'].includes(tenant.plan) ? 'var(--row-bg)' : `${accent}18`, border: `1px solid ${!['pro','business'].includes(tenant.plan) ? 'var(--card-border)' : accent + '44'}`, color: !['pro','business'].includes(tenant.plan) ? COLORS.dim : accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: (ensResolutionSaving || !['pro','business'].includes(tenant.plan)) ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
                                             {ensResolutionSaving && ensResolutionStep.includes('resolver') ? `⟳ ${ensResolutionStep}` : 'Set resolver (mainnet tx)'}
                                         </button>
                                         <a href={`https://app.ens.domains/${tenant.ens_domain}`} target="_blank" rel="noreferrer"
