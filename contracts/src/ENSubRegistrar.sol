@@ -33,7 +33,6 @@ contract ENSubRegistrar {
     error Paused_();
     error InsufficientPayment(uint256 sent, uint256 required);
     error AlreadyOwnsSubdomain();
-    error LabelUnavailable(string label);
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
@@ -48,7 +47,7 @@ contract ENSubRegistrar {
     ) {
         registry    = IL2Registry(_registry);
         chainId     = uint64(block.chainid);
-        rootNode    = IL2Registry(_registry).parentNode();
+        rootNode    = IL2Registry(_registry).baseNode();
         owner       = msg.sender;
         treasury    = _treasury == address(0) ? msg.sender : _treasury;
         price       = _price;
@@ -66,16 +65,14 @@ contract ENSubRegistrar {
         // 1-per-wallet check
         if (limitToOne && registry.balanceOf(recipient) > 0) revert AlreadyOwnsSubdomain();
 
-        // Availability check
-        if (!registry.available(rootNode, label)) revert LabelUnavailable(label);
-
         // Collect fee
         if (msg.value > 0) {
             (bool ok,) = treasury.call{value: msg.value}("");
             require(ok, "Treasury transfer failed");
         }
 
-        registry.register(rootNode, label, recipient);
+        // createSubnode reverts internally if label is already taken
+        registry.createSubnode(rootNode, label, recipient, new bytes[](0));
         emit Registered(label, recipient, rootNode);
     }
 

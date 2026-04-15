@@ -2,8 +2,7 @@
 pragma solidity ^0.8.20;
 
 interface IL2Registry {
-    function register(bytes32 parentNode, string calldata label, address owner) external;
-    function available(bytes32 parentNode, string calldata label) external view returns (bool);
-    function parentNode() external view returns (bytes32);
+    function createSubnode(bytes32 node, string calldata label, address _owner, bytes[] calldata data) external;
+    function baseNode() external view returns (bytes32);
     function balanceOf(address owner) external view returns (uint256);
 }
