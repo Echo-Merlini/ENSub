@@ -13,7 +13,7 @@ class Tenant extends Model
 
     protected $fillable = [
         'name', 'ens_domain', 'owner_address', 'billing_email', 'namestone_api_key',
-        'slug', 'logo_url', 'accent_color', 'plan', 'active', 'claim_limit',
+        'slug', 'logo_url', 'accent_color', 'plan', 'active', 'claim_limit', 'resolver_mode',
     ];
 
     protected $casts = [

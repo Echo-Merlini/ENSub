@@ -33,6 +33,7 @@ interface Tenant {
     at_limit: boolean
     gate_type: string
     plan: string
+    resolver_mode: 'namestone' | 'l1resolver'
     chains: ChainOption[]
 }
 
@@ -181,7 +182,11 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
     const [status, setStatus] = useState<Status>('idle')
     const [message, setMessage] = useState('')
     const [claimedName, setClaimedName] = useState('')
-    const [selectedChain, setSelectedChain] = useState<ChainOption | null>(null) // null = offchain
+    const gaslessEnabled = tenant.resolver_mode !== 'l1resolver'
+    // When gasless is disabled default to first L2 chain if available
+    const [selectedChain, setSelectedChain] = useState<ChainOption | null>(
+        !gaslessEnabled && tenant.chains?.length ? tenant.chains[0] : null
+    )
     const [mintedChains, setMintedChains] = useState<Set<number>>(new Set())
     const [mintingChainId, setMintingChainId] = useState<number | null>(null)
     const [mintError, setMintError] = useState('')
@@ -391,7 +396,8 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 {/* Chain status rows */}
                 {hasChains && (
                     <div style={{ border: '1px solid var(--card-border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
-                        {/* Offchain row — always claimed */}
+                        {/* Offchain row — only shown when Namestone resolver is active */}
+                        {gaslessEnabled && (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--row-bg)', borderBottom: '1px solid var(--card-border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={22} height={22} alt="Ethereum" style={{ borderRadius: '50%' }} />
@@ -402,6 +408,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                             </div>
                             <span style={{ fontSize: '0.78rem', color: accent, fontWeight: 'bold' }}>✓ Claimed</span>
                         </div>
+                        )}
 
                         {/* L2 rows */}
                         {activeChains.map((ch, i) => {
@@ -505,6 +512,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Claim on</label>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {gaslessEnabled && (
                         <button
                             onClick={() => setSelectedChain(null)}
                             style={{
@@ -517,6 +525,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                             }}>
                             <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={14} height={14} alt="" style={{ borderRadius: '50%', verticalAlign: 'middle' }} /> Offchain — gasless
                         </button>
+                        )}
                         {activeChains.map(ch => {
                             const meta = CHAIN_META[ch.chain_id]
                             const active = selectedChain?.chain_id === ch.chain_id

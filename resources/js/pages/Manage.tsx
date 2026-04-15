@@ -186,6 +186,7 @@ interface TenantData {
     min_balance: string | null
     allowlist_addresses: string | null
     namestone_api_key: string
+    resolver_mode: 'namestone' | 'l1resolver'
     claims: ClaimEntry[]
     chains: ChainEntry[]
 }
@@ -366,6 +367,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     }
 
     // Phase 2: ENS on-chain resolution
+    const [resolverMode, setResolverMode] = useState<'namestone' | 'l1resolver'>(tenant.resolver_mode ?? 'namestone')
     const [ensResolutionSaving, setEnsResolutionSaving] = useState(false)
     const [ensResolutionStep, setEnsResolutionStep] = useState('')
     const [ensResolutionError, setEnsResolutionError] = useState('')
@@ -622,7 +624,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         }
     }
 
-    const handleSetResolverTo = async (resolverAddress: `0x${string}`, label: string) => {
+    const handleSetResolverTo = async (resolverAddress: `0x${string}`, label: string, mode: 'namestone' | 'l1resolver') => {
         setEnsResolutionSaving(true)
         setEnsResolutionError('')
         setEnsResolutionStep('')
@@ -640,6 +642,13 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 chainId: mainnet.id,
             })
             await waitForTransactionReceipt(wagmiConfig, { hash: txHash, chainId: mainnet.id })
+            // Persist resolver mode in DB
+            await fetch(`/api/manage/${tenant.slug}/resolver-mode`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner_address: address, mode }),
+            })
+            setResolverMode(mode)
             setEnsResolutionStep('')
         } catch (e: any) {
             setEnsResolutionError(e.shortMessage ?? e.message ?? 'Failed to set resolver')
@@ -649,8 +658,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         }
     }
 
-    const handleSetResolver         = () => handleSetResolverTo(L1_RESOLVER_ADDRESS,       'Setting Durin resolver on mainnet')
-    const handleRevertToNamestone   = () => handleSetResolverTo(NAMESTONE_RESOLVER_ADDRESS, 'Reverting to Namestone resolver')
+    const handleSetResolver       = () => handleSetResolverTo(L1_RESOLVER_ADDRESS,       'Setting Durin resolver on mainnet', 'l1resolver')
+    const handleRevertToNamestone = () => handleSetResolverTo(NAMESTONE_RESOLVER_ADDRESS, 'Reverting to Namestone resolver',   'namestone')
 
     // Phase 2: register L2Registry with L1Resolver on mainnet for a specific chain
     const handleSetL2Registry = async (ch: ChainEntry) => {
@@ -1460,6 +1469,18 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     Allow <strong style={{ color: COLORS.text }}>*.{tenant.ens_domain}</strong> subdomains to resolve on-chain (wallets, dApps, viem).
                                     Requires two Ethereum mainnet steps — switch resolver once, then register each L2 chain.
                                 </p>
+
+                                {/* Resolver mode status */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', padding: '10px 14px', borderRadius: '8px', background: resolverMode === 'l1resolver' ? `${accent}0d` : 'rgba(255,68,68,0.06)', border: `1px solid ${resolverMode === 'l1resolver' ? accent + '33' : 'rgba(255,68,68,0.2)'}` }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: resolverMode === 'l1resolver' ? accent : '#ff6666' }}>
+                                        {resolverMode === 'l1resolver' ? '● On-chain resolution active' : '● Offchain (Namestone) active'}
+                                    </span>
+                                    <span style={{ fontSize: '0.72rem', color: COLORS.muted }}>
+                                        {resolverMode === 'l1resolver'
+                                            ? 'Gasless claims are disabled — subdomains resolve via L2 chain NFTs only.'
+                                            : 'Gasless claims are active. Switch to L1Resolver to enable on-chain resolution.'}
+                                    </span>
+                                </div>
 
                                 {/* Step 1 — update resolver */}
                                 <div style={{ marginBottom: '12px', padding: '14px', borderRadius: '8px', background: 'var(--row-bg)', border: '1px solid var(--row-border)' }}>

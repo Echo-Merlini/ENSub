@@ -48,6 +48,7 @@ class ClaimController extends Controller
                 'at_limit'      => $tenant->isAtLimit(),
                 'gate_type'     => $tenant->gateConfig?->type ?? 'open',
                 'plan'          => $tenant->plan,
+                'resolver_mode' => $tenant->resolver_mode ?? 'namestone',
                 'chains'        => $tenant->chains()->where('enabled', true)->orderBy('chain_id')->get()->map(fn($ch) => [
                     'chain_id'          => $ch->chain_id,
                     'chain_name'        => $ch->chain_name,
@@ -79,6 +80,7 @@ class ClaimController extends Controller
                 'min_balance'         => $tenant->gateConfig?->min_balance,
                 'allowlist_addresses' => $tenant->gateConfig?->allowlist_addresses,
                 'namestone_api_key' => $tenant->namestone_api_key,
+                'resolver_mode'     => $tenant->resolver_mode ?? 'namestone',
                 'claims'            => $tenant->claims()->latest()->get()->map(fn($c) => [
                     'id'             => $c->id,
                     'wallet_address' => $c->wallet_address,
@@ -172,5 +174,24 @@ class ClaimController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    public function setResolverMode(string $slug, Request $request): JsonResponse
+    {
+        $tenant = Tenant::where('slug', $slug)->firstOrFail();
+
+        $address = strtolower(trim($request->input('owner_address', '')));
+        if ($address !== strtolower($tenant->owner_address)) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+
+        $mode = $request->input('mode');
+        if (!in_array($mode, ['namestone', 'l1resolver'])) {
+            return response()->json(['error' => 'Invalid mode'], 422);
+        }
+
+        $tenant->update(['resolver_mode' => $mode]);
+
+        return response()->json(['resolver_mode' => $mode]);
     }
 }

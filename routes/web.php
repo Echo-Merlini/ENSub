@@ -15,7 +15,8 @@ Route::get('/pricing', fn () => Inertia::render('Pricing', ['slug' => request()-
 
 // Tenant management (owner only, verified via wallet session)
 Route::get('/manage/{slug}',  [ClaimController::class, 'manage'])->name('tenant.manage');
-Route::post('/api/manage/{slug}/save', [ClaimController::class, 'manageSave'])->name('tenant.manage.save');
+Route::post('/api/manage/{slug}/save',          [ClaimController::class, 'manageSave'])->name('tenant.manage.save');
+Route::post('/api/manage/{slug}/resolver-mode', [ClaimController::class, 'setResolverMode']);
 Route::delete('/api/manage/{slug}/claims/{claim}', [ClaimController::class, 'revokeClaim'])->name('tenant.manage.revoke');
 
 // Durin L2 chain management
