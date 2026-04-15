@@ -15,4 +15,7 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Fix ownership of anything written to storage by root during bootstrap
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
 exec "$@"
