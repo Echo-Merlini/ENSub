@@ -210,10 +210,33 @@ flowchart LR
 
 ---
 
+## Resolver modes
+
+ENSub tracks which ENS resolver is active for your domain. The two modes are **mutually exclusive** — switching to one disables the other at the protocol level.
+
+| | Mode A — Namestone (default) | Mode B — L1Resolver (on-chain) |
+|---|---|---|
+| **Resolver** | `0xA87361c4…` (Namestone) | `0x8A968aB9…` (Durin L1Resolver) |
+| **Resolution path** | ENS Registry → Namestone offchain CCIP-Read → DB | ENS Registry → L1Resolver → CCIP-Read → L2Registry (per chain) |
+| **Gasless claims** | ✅ Active | ❌ Inactive (Namestone no longer authoritative) |
+| **L2 NFT mints** | ✅ Claimants pay L2 gas | ✅ Claimants pay L2 gas |
+| **Subdomain resolves in wallets** | Via Namestone DB record | Via on-chain L2Registry NFT |
+| **Status badge** | 🔴 Offchain (Namestone) active | 🟢 On-chain resolution active |
+
+**Switching modes** — done from the Manage page → ENS Resolution section:
+- `Set resolver → L1Resolver` : one mainnet tx + one tx per L2 chain to register registries
+- `↩ Revert to Namestone` : one mainnet tx; gasless claims resume
+
+> ⚠️ Switching to L1Resolver disables Namestone — gasless-only claimants who have not minted on any L2 will stop resolving in wallets/dApps until you revert or they mint on-chain.
+
+---
+
 ## Claim modes
 
 ### Ξ ETH — Gasless (Namestone)
 Subdomains are resolved offchain through Namestone using EIP-3668 CCIP-Read. Zero on-chain transactions for claimants after the domain owner does a one-time resolver setup. Tracked in the `claims` DB table.
+
+> Only available when resolver mode is **Namestone** (Mode A). The claim page hides this option automatically when L1Resolver is active.
 
 ### L2 NFT Minting (Durin)
 Each L2 chain needs two deployed contracts:
@@ -231,7 +254,14 @@ Once L2 chains are deployed, the Manage page guides the domain owner through two
 
 After this, `subdomain.yourdomain.eth` resolves on-chain via CCIP-Read from the L2Registry. A **↩ Revert to Namestone** button is available to switch back to the Namestone offchain resolver (`0xA87361C4E58B619c390f469B9E6F27d759715125`).
 
-> ⚠️ Switching to the L1Resolver disables Namestone offchain resolution — gasless-only claimants who haven't minted on an L2 will stop resolving in wallets/dApps.
+The full CCIP-Read resolution chain:
+```
+ENS Registry (mainnet)
+  └─ L1Resolver.resolve(name)
+       └─ CCIP-Read offchain call
+            └─ iterate registered L2 chains
+                 └─ L2Registry.ownerOf(tokenId)  →  claimant address
+```
 
 ### L2 Cross-chain Sync (Phase 3)
 `SubnodeCreated` events are indexed from each L2Registry via `php artisan l2:sync`. Runs every 15 minutes via Laravel Scheduler (supervisord in Docker). Chunks `eth_getLogs` in 2 000-block windows, falls back to public RPC when Alchemy free-tier block-range limit is hit. Syncs wallet address, subdomain label, and chain ID into the `claims` table — so mints done directly on-chain (bypassing the claim page) appear in the admin panel.
@@ -240,8 +270,10 @@ After this, `subdomain.yourdomain.eth` resolves on-chain via CCIP-Read from the 
 Custom L2 registrar contract (`contracts/src/ENSubRegistrar.sol`) with:
 - **On-chain 1-per-wallet enforcement** — checks `registry.balanceOf(recipient) == 0` before allowing a mint
 - **Configurable mint price** — set in wei; collected to a treasury address (defaults to deployer)
+- **Excess payment refund** — only `price` is forwarded to treasury; any overpayment is returned to the sender
 - **Pause / admin controls** — `setPaused`, `setPrice`, `setTreasury`, `setLimitToOne`, `transferOwnership`
 - **`canRegister(wallet)`** — view function for UI pre-checks
+- **Manage page controls** — price, treasury address, 1-per-wallet toggle, and pause accessible via ⚙ Settings per chain
 
 ---
 

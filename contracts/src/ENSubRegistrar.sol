@@ -65,10 +65,14 @@ contract ENSubRegistrar {
         // 1-per-wallet check
         if (limitToOne && registry.balanceOf(recipient) > 0) revert AlreadyOwnsSubdomain();
 
-        // Collect fee
-        if (msg.value > 0) {
-            (bool ok,) = treasury.call{value: msg.value}("");
+        // Collect fee — send exactly price, refund any excess to sender
+        if (price > 0) {
+            (bool ok,) = treasury.call{value: price}("");
             require(ok, "Treasury transfer failed");
+            if (msg.value > price) {
+                (bool refundOk,) = msg.sender.call{value: msg.value - price}("");
+                require(refundOk, "Refund failed");
+            }
         }
 
         // createSubnode reverts internally if label is already taken
