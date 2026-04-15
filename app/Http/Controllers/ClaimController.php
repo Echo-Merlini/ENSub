@@ -87,12 +87,12 @@ class ClaimController extends Controller
                     'claimed_at'     => $c->created_at->toDateTimeString(),
                     'minted_chains'  => $c->minted_chains ?? [],
                 ])->values()->toArray(),
-                'chains' => $tenant->chains()->where('enabled', true)->orderBy('chain_id')->get()->map(fn($ch) => [
+                'chains' => $tenant->chains()->orderBy('chain_id')->get()->map(fn($ch) => [
                     'chain_id'          => $ch->chain_id,
                     'chain_name'        => $ch->chain_name,
                     'registry_address'  => $ch->registry_address,
                     'registrar_address' => $ch->registrar_address,
-                    'enabled'           => $ch->enabled,
+                    'enabled'           => (bool) $ch->enabled,
                 ])->values()->toArray(),
             ],
         ]);
