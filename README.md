@@ -12,6 +12,187 @@ ENSub gives any <img src="https://raw.githubusercontent.com/Echo-Merlini/ENSub/m
 
 ---
 
+## Architecture overview
+
+```mermaid
+graph TD
+    subgraph Browser["Browser (React + wagmi + RainbowKit)"]
+        ClaimPage["Claim page\n/claim/{slug}"]
+        ManagePage["Manage page\n/manage/{slug}"]
+    end
+
+    subgraph Backend["Backend (Laravel 11)"]
+        API["REST API\n/api/..."]
+        NFTMeta["NFT Metadata\n/nft/{slug}/{chainId}/{tokenId}"]
+        Scheduler["Laravel Scheduler\nl2:sync (every 15 min)"]
+        Filament["Filament Admin\n/admin"]
+        Cashier["Laravel Cashier\nStripe billing"]
+    end
+
+    subgraph Storage["Storage"]
+        SQLite["SQLite DB\ntenants, claims, chains"]
+    end
+
+    subgraph ENS["ENS Layer (Ethereum mainnet)"]
+        ENSRegistry["ENS Registry\n0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"]
+        NamestoneResolver["Namestone Resolver\n0xA87361c4E58B619c390f469B9E6F27d759715125"]
+        L1Resolver["Durin L1Resolver\n0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61"]
+    end
+
+    subgraph Offchain["Offchain Resolution (Namestone)"]
+        NamestoneAPI["Namestone API\nEIP-3668 CCIP-Read"]
+    end
+
+    subgraph L2["L2 Chains (Durin)"]
+        DurinFactory["Durin Factory\n0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d\n(Base · OP · Arb · Polygon · Linea · Scroll · Celo · World Chain)"]
+        L2Registry["L2Registry\nERC-721 subnode NFTs"]
+        ENSubRegistrar["ENSubRegistrar\nprice · limit · treasury · pause"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        Docker["Docker (Coolify on NAS)"]
+        CloudflareTunnel["Cloudflare Tunnel"]
+        Traefik["Traefik reverse proxy"]
+        Alchemy["Alchemy RPC\n(ENS reads + tx receipts)"]
+        Stripe["Stripe\nPro $9 · Business $29"]
+    end
+
+    ClaimPage -->|"SIWE auth + claim"| API
+    ClaimPage -->|"mint tx"| ENSubRegistrar
+    ManagePage -->|"tenant config"| API
+    ManagePage -->|"deploy + resolver txs"| ENS
+    ManagePage -->|"deploy factory txs"| DurinFactory
+
+    API --> SQLite
+    Filament --> SQLite
+    Cashier --> Stripe
+
+    DurinFactory -->|"deploys"| L2Registry
+    ManagePage -->|"deploys"| ENSubRegistrar
+    ENSubRegistrar -->|"createSubnode()"| L2Registry
+
+    L1Resolver -->|"CCIP-Read"| L2Registry
+    ENSRegistry --> NamestoneResolver
+    ENSRegistry --> L1Resolver
+    NamestoneResolver --> NamestoneAPI
+    NamestoneAPI --> SQLite
+
+    Scheduler -->|"eth_getLogs SubnodeCreated"| L2Registry
+    Scheduler --> SQLite
+
+    NFTMeta --> SQLite
+    L2Registry -->|"tokenURI()"| NFTMeta
+
+    Backend --> Docker
+    Docker --> Traefik
+    Traefik --> CloudflareTunnel
+
+    API -->|"ENS ownership check"| Alchemy
+    Scheduler -->|"RPC calls"| Alchemy
+```
+
+---
+
+## Claim flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant ClaimPage as Claim page
+    participant API as Laravel API
+    participant Namestone as Namestone API
+    participant Registrar as ENSubRegistrar (L2)
+    participant Registry as L2Registry (L2)
+
+    User->>ClaimPage: Connect wallet
+    ClaimPage->>API: POST /api/claim/{slug}/check (SIWE)
+    API-->>ClaimPage: eligibility + chain list
+
+    alt Offchain (gasless)
+        ClaimPage->>API: POST /api/claim/{slug}
+        API->>Namestone: setName(label, address)
+        Namestone-->>API: ok
+        API-->>ClaimPage: claimed
+    else L2 NFT mint
+        ClaimPage->>Registrar: register(label, recipient) + value
+        Registrar->>Registry: createSubnode(rootNode, label, recipient, [])
+        Registry-->>Registrar: SubnodeCreated event
+        Registrar-->>ClaimPage: tx receipt
+        ClaimPage->>API: POST /api/claim/{slug}/mint-record
+        API-->>ClaimPage: updated chain badges
+    end
+```
+
+---
+
+## ENS resolver setup flow
+
+```mermaid
+sequenceDiagram
+    actor Owner
+    participant ManagePage as Manage page
+    participant ENSRegistry as ENS Registry (mainnet)
+    participant L1Resolver as Durin L1Resolver (mainnet)
+    participant L2Registry as L2Registry (L2)
+
+    Owner->>ManagePage: Click "Set resolver"
+    ManagePage->>ENSRegistry: setResolver(node, L1ResolverAddress) tx
+    ENSRegistry-->>ManagePage: confirmed
+
+    loop For each L2 chain
+        Owner->>ManagePage: Click "Register chain"
+        ManagePage->>L1Resolver: setL2Registry(node, chainId, registryAddress) tx
+        L1Resolver-->>ManagePage: confirmed
+    end
+
+    Note over L1Resolver,L2Registry: Wallets now resolve subdomain.yourdomain.eth<br/>via CCIP-Read → L2Registry
+```
+
+---
+
+## ENSubRegistrar deploy flow
+
+```mermaid
+sequenceDiagram
+    actor Owner
+    participant ManagePage as Manage page
+    participant Factory as Durin Factory (L2)
+    participant Registry as L2Registry (L2)
+    participant Registrar as ENSubRegistrar (L2)
+    participant API as Laravel API (mainnet)
+
+    Owner->>ManagePage: Click "Deploy" (chain selected)
+
+    ManagePage->>Factory: deployRegistry(ensDomain) tx
+    Factory-->>ManagePage: RegistryDeployed event → registryAddr
+
+    ManagePage->>ManagePage: deployContract(ENSubRegistrar bytecode,\nregistryAddr, treasury, price, limitToOne)
+    ManagePage-->>ManagePage: registrarAddr
+
+    ManagePage->>Registry: addRegistrar(registrarAddr) tx
+    Registry-->>ManagePage: confirmed
+
+    ManagePage->>Registry: setBaseURI(metadataUri) tx
+    Registry-->>ManagePage: confirmed
+
+    ManagePage->>API: POST /api/manage/{slug}/chains\n(chain_id, registry, registrar)
+    API-->>ManagePage: chain saved
+```
+
+---
+
+## L2 sync (cross-chain indexer)
+
+```mermaid
+flowchart LR
+    Scheduler["Laravel Scheduler\nEvery 15 min"] --> SyncCmd["l2:sync artisan command"]
+    SyncCmd -->|"eth_getLogs\nSubnodeCreated\n2000-block chunks"| L2Registry["L2Registry\n(each configured chain)"]
+    L2Registry --> SyncCmd
+    SyncCmd -->|"upsert label + wallet\n+ chain_id"| SQLite["claims table\n(minted_chains JSON)"]
+```
+
+---
+
 ## Stack
 
 | Layer | Tech |
@@ -20,9 +201,9 @@ ENSub gives any <img src="https://raw.githubusercontent.com/Echo-Merlini/ENSub/m
 | Frontend | Inertia.js + React + Vite |
 | Wallets | RainbowKit + wagmi v2 + viem |
 | Auth | SIWE (Sign In With Ethereum) |
-| <img src="https://raw.githubusercontent.com/Echo-Merlini/ENSub/main/public/images/ens-logo.svg" height="13" alt="ENS"> ENS | On-chain ownership checks via Alchemy + EIP-137 namehash (keccak256) |
-| <img src="https://raw.githubusercontent.com/Echo-Merlini/ENSub/main/public/images/namestone-logo.png" height="13" alt="Namestone"> Namestone | Gasless offchain subdomain resolver API |
-| Durin | L2 subdomain NFT contracts (L2Registry + L2Registrar) |
+| ENS | On-chain ownership checks via Alchemy + EIP-137 namehash |
+| Namestone | Gasless offchain subdomain resolver API |
+| Durin | L2 subdomain NFT contracts (L2Registry + ENSubRegistrar) |
 | Billing | Laravel Cashier + Stripe (Pro $9/mo, Business $29/mo) |
 | DB | SQLite (persistent volume on NAS) |
 | Deploy | Docker → Coolify (NAS) → Cloudflare Tunnel |
@@ -37,13 +218,13 @@ Subdomains are resolved offchain through Namestone using EIP-3668 CCIP-Read. Zer
 ### L2 NFT Minting (Durin)
 Each L2 chain needs two deployed contracts:
 - **L2Registry** — ERC-721 contract deployed via the Durin factory (`0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d`). Manages subnode records.
-- **L2Registrar** — open registrar that calls `createSubnode()` on the registry. Must be authorized via `addRegistrar()` on the registry.
+- **ENSubRegistrar** — custom registrar that calls `createSubnode()` on the registry with optional price, 1-per-wallet limit, pause, and treasury controls. An open (no-limit) registrar is also available.
 
 The Manage page deploys both in one click (registry → registrar → authorize → set metadata URI). L2 mints are tracked in the `minted_chains` JSON column on each claim record. Each minted NFT returns metadata from the `/nft/{slug}/{chainId}/{tokenId}` endpoint.
 
-**Supported L2s:** Base · Optimism · Arbitrum · Polygon · Linea · Scroll
+**Supported L2s:** Base · Optimism · Arbitrum · Polygon · Linea · Scroll · Celo · World Chain
 
-### ENS On-chain Resolution (Durin Phase 2)
+### ENS On-chain Resolution (Phase 2)
 Once L2 chains are deployed, the Manage page guides the domain owner through two mainnet steps:
 1. **Set resolver** — points the ENS domain at the pre-deployed Durin L1Resolver (`0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61`)
 2. **Register L2 registries** — calls `setL2Registry(node, chainId, registryAddress)` on the L1Resolver for each chain
@@ -56,13 +237,51 @@ After this, `subdomain.yourdomain.eth` resolves on-chain via CCIP-Read from the 
 `SubnodeCreated` events are indexed from each L2Registry via `php artisan l2:sync`. Runs every 15 minutes via Laravel Scheduler (supervisord in Docker). Chunks `eth_getLogs` in 2 000-block windows, falls back to public RPC when Alchemy free-tier block-range limit is hit. Syncs wallet address, subdomain label, and chain ID into the `claims` table — so mints done directly on-chain (bypassing the claim page) appear in the admin panel.
 
 ### ENSubRegistrar (Phase 4)
-A custom L2 registrar contract (`contracts/src/ENSubRegistrar.sol`) with:
+Custom L2 registrar contract (`contracts/src/ENSubRegistrar.sol`) with:
 - **On-chain 1-per-wallet enforcement** — checks `registry.balanceOf(recipient) == 0` before allowing a mint
 - **Configurable mint price** — set in wei; collected to a treasury address (defaults to deployer)
 - **Pause / admin controls** — `setPaused`, `setPrice`, `setTreasury`, `setLimitToOne`, `transferOwnership`
 - **`canRegister(wallet)`** — view function for UI pre-checks
 
-The Manage page deploy flow offers a registrar type selector: **Open** (original Durin registrar, free/no limits) or **ENSub** (custom registrar with the controls above). The Claim page reads `price()` from the registrar and passes the correct `value` with the mint transaction; it also calls `canRegister()` to show an amber warning if the wallet is already blocked.
+---
+
+## Smart contracts
+
+### ENSubRegistrar (`contracts/src/ENSubRegistrar.sol`)
+
+| Function | Visibility | Description |
+|---|---|---|
+| `register(label, recipient)` | `external payable` | Mint a subdomain NFT; enforces pause, price, 1-per-wallet |
+| `canRegister(wallet)` | `external view` | Returns false if paused or wallet already holds a token |
+| `setPrice(price)` | `onlyOwner` | Set mint price in wei (0 = free) |
+| `setTreasury(address)` | `onlyOwner` | Set fee collection address |
+| `setLimitToOne(bool)` | `onlyOwner` | Toggle 1-per-wallet enforcement |
+| `setPaused(bool)` | `onlyOwner` | Pause / unpause minting |
+| `transferOwnership(address)` | `onlyOwner` | Transfer admin |
+
+**Constructor args:** `_registry` (L2Registry address), `_treasury`, `_price` (wei), `_limitToOne` (bool)
+
+**IL2Registry interface** (Durin L2Registry):
+
+```solidity
+function createSubnode(bytes32 node, string calldata label, address _owner, bytes[] calldata data) external;
+function baseNode() external view returns (bytes32);
+function balanceOf(address owner) external view returns (uint256);
+```
+
+**Key addresses (all chains):**
+- Durin Factory: `0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d`
+- Durin L1Resolver: `0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61`
+- Namestone Resolver: `0xA87361C4E58B619c390f469B9E6F27d759715125`
+- ENS Registry (mainnet): `0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e`
+
+---
+
+## Known limitations
+
+- **Revoke doesn't burn L2 NFT** — neither the Durin L2Registry nor the open L2Registrar has a burn function. Revoke on the Manage page removes the Namestone offchain record only; the on-chain NFT stays.
+- **L2-only claimants** — if a user mints on L2 without doing the offchain step, there's no Namestone record. Subdomain resolves on-chain only after the L1Resolver phase is done.
+- **Expiry/renewal** — ENSubRegistrar has no expiry. Permanent mints only.
 
 ---
 
@@ -82,25 +301,16 @@ The Manage page deploy flow offers a registrar type selector: **Open** (original
 - **Gate types** — open, NFT (ETHscriptions/ERC-721), ERC-20 token, allowlist
 - **Light/dark mode** — localStorage, toggled from nav
 - **Animated background** — optional Vanta.js NET
-- **Claim page** — `Ξ ETH` gasless row + one row per configured L2 chain with MINT button; already-claimed wallets see their chain status and can mint on additional L2s; 1-per-wallet per chain enforced in UI
+- **Claim page** — `Ξ ETH` gasless row + one row per configured L2 chain; already-claimed wallets can mint on additional L2s; 1-per-wallet per chain enforced in UI
 - **NFT metadata** — `GET /nft/{slug}/{chainId}/{tokenId}` returns ERC-721 metadata (name, description, image, chain attribute); tokenId resolved via keccak256 namehash
 - **Manage page** (owner-only, wallet-verified):
   - Edit branding, gate config, Namestone API key, claim limit
   - L2 Chains: deploy contracts in-browser (1 click); enable/disable per chain; ⚙ Fix button redeploys and re-authorizes the registrar
-  - ENS On-chain Resolution: set/revert resolver + register L2 registries on mainnet; amber warning before switching away from Namestone
+  - ENS On-chain Resolution: set/revert resolver + register L2 registries on mainnet
   - Claims list: `Ξ ETH` badge + per-chain mint badges; per-row revoke
   - Share card (Twitter/X, Farcaster, copy link) · Embed widget (Pro/Business only)
 - **Filament admin** at `/admin` — tenant management, claims list with L2 Mints column
 - **Stripe billing** — Free: 50 claims · Pro: 500 · Business: unlimited
-
----
-
-## Known limitations / Next
-
-- **Revoke doesn't burn L2 NFT** — neither the Durin L2Registry nor L2Registrar has a burn/delete function. Revoke on the Manage page removes the Namestone offchain record only; the on-chain NFT stays. Requires a custom registry with a burn function (Phase 4+).
-- **L2-only claimants** — if a user mints on L2 without doing the offchain step, there's no Namestone record. Subdomain resolves on-chain only after the L1Resolver phase is done.
-- **ENSubRegistrar not yet deployed for pixelgoblins.eth** — existing chains still use the open L2Registrar. Redeploy via Manage page (⚙ Fix) with the ENSub type selected to upgrade.
-- **Expiry/renewal** — ENSubRegistrar has no expiry. Permanent mints only. Future work if needed.
 
 ---
 
@@ -125,6 +335,7 @@ STRIPE_SECRET=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_PRO=
 STRIPE_PRICE_BUSINESS=
+NAMESTONE_API_KEY=
 ```
 
 ---
@@ -132,16 +343,17 @@ STRIPE_PRICE_BUSINESS=
 ## Deployment (Coolify on NAS)
 
 - Container port: 80, reverse-proxied via Traefik
-- Cloudflare tunnel exposes the app publicly
+- Cloudflare Tunnel exposes the app publicly
 - Persistent SQLite on a mounted host volume
-- `php artisan migrate` runs on each deploy
+- `php artisan migrate` + `db:seed` run on each deploy (entrypoint.sh)
+- L2 sync runs via Laravel Scheduler every 15 minutes inside the container (supervisord)
 
 ---
 
 ## Stripe webhook
 
 - Endpoint: `https://www.ensub.org/stripe/webhook`
-- Events: `customer.subscription.created/updated/deleted`
+- Events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
 
 ---
 
