@@ -11,7 +11,7 @@ import {
     walletConnectWallet,
     safeWallet,
 } from '@rainbow-me/rainbowkit/wallets'
-import { mainnet } from 'wagmi/chains'
+import { mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
 const queryClient = new QueryClient()
@@ -41,9 +41,19 @@ function getWagmiConfig() {
     )
 
     return createConfig({
-        chains: [mainnet],
+        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain],
         connectors,
-        transports: { [mainnet.id]: http(rpcUrl) },
+        transports: {
+            [mainnet.id]:     http(rpcUrl),
+            [base.id]:        http(),
+            [optimism.id]:    http(),
+            [arbitrum.id]:    http(),
+            [polygon.id]:     http(),
+            [linea.id]:       http(),
+            [scroll.id]:      http(),
+            [celo.id]:        http(),
+            [worldchain.id]:  http(),
+        },
         ssr: false,
     })
 }
@@ -141,7 +151,12 @@ function Step1({ onDone }: { onDone: () => void }) {
 
             onDone()
         } catch (e: any) {
-            setError(e.message || 'Something went wrong')
+            const msg: string = e.message || ''
+            if (msg.toLowerCase().includes('chain not configured') || msg.toLowerCase().includes('switch chain')) {
+                setError('Wallet is on an unsupported network. Switch to Ethereum mainnet and try again.')
+            } else {
+                setError(msg || 'Something went wrong')
+            }
         } finally {
             setLoading(false)
         }
