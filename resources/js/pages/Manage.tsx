@@ -1447,22 +1447,22 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     <code style={{ display: 'block', fontSize: '0.72rem', color: COLORS.dim, fontFamily: "'Fira Code', monospace", marginBottom: '10px', wordBreak: 'break-all' as const }}>
                                         {L1_RESOLVER_ADDRESS}
                                     </code>
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' as const }}>
                                         <button
                                             onClick={handleSetResolver}
                                             disabled={ensResolutionSaving}
-                                            style={{ padding: '7px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1 }}>
+                                            style={{ padding: '7px 14px', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
                                             {ensResolutionSaving && ensResolutionStep.includes('resolver') ? `⟳ ${ensResolutionStep}` : 'Set resolver (mainnet tx)'}
                                         </button>
                                         <a href={`https://app.ens.domains/${tenant.ens_domain}`} target="_blank" rel="noreferrer"
-                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--row-border)', color: COLORS.muted, borderRadius: '6px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--row-border)', color: COLORS.muted, borderRadius: '6px', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' as const }}>
                                             Or use ENS app ↗
                                         </a>
                                         <button
                                             onClick={handleRevertToNamestone}
                                             disabled={ensResolutionSaving}
                                             title={`Revert to Namestone resolver (${NAMESTONE_RESOLVER_ADDRESS})`}
-                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', color: '#ff6666', borderRadius: '6px', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1 }}>
+                                            style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,68,68,0.3)', color: '#ff6666', borderRadius: '6px', fontSize: '0.8rem', cursor: ensResolutionSaving ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
                                             {ensResolutionSaving && ensResolutionStep.includes('Namestone') ? `⟳ ${ensResolutionStep}` : '↩ Revert to Namestone'}
                                         </button>
                                     </div>
