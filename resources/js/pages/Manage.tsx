@@ -5,16 +5,18 @@ import { decodeEventLog, namehash } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
-import { mainnet, base, optimism, arbitrum, polygon, linea, scroll } from 'wagmi/chains'
+import { mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
 const DURIN_CHAINS = [
-    { id: 8453,   name: 'Base',      icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
-    { id: 10,     name: 'Optimism',  icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
-    { id: 42161,  name: 'Arbitrum',  icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
-    { id: 137,    name: 'Polygon',   icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
-    { id: 59144,  name: 'Linea',     icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
-    { id: 534352, name: 'Scroll',    icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
+    { id: 8453,   name: 'Base',        icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
+    { id: 10,     name: 'Optimism',    icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
+    { id: 42161,  name: 'Arbitrum',    icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
+    { id: 137,    name: 'Polygon',     icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
+    { id: 59144,  name: 'Linea',       icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
+    { id: 534352, name: 'Scroll',      icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
+    { id: 42220,  name: 'Celo',        icon: '🟢', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_celo.jpg' },
+    { id: 480,    name: 'World Chain', icon: '🌐', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_world%20chain.jpg' },
 ]
 
 const ChainIcon = ({ chain, size = 16 }: { chain?: typeof DURIN_CHAINS[0], size?: number }) =>
@@ -23,12 +25,14 @@ const ChainIcon = ({ chain, size = 16 }: { chain?: typeof DURIN_CHAINS[0], size?
         : <span>{chain?.icon ?? '🔗'}</span>
 
 const CHAIN_META: Record<number, { wagmiChain: any }> = {
-    8453:   { wagmiChain: base     },
-    10:     { wagmiChain: optimism },
-    42161:  { wagmiChain: arbitrum },
-    137:    { wagmiChain: polygon  },
-    59144:  { wagmiChain: linea    },
-    534352: { wagmiChain: scroll   },
+    8453:   { wagmiChain: base       },
+    10:     { wagmiChain: optimism   },
+    42161:  { wagmiChain: arbitrum   },
+    137:    { wagmiChain: polygon    },
+    59144:  { wagmiChain: linea      },
+    534352: { wagmiChain: scroll     },
+    42220:  { wagmiChain: celo       },
+    480:    { wagmiChain: worldchain },
 }
 
 const FACTORY_ADDRESS    = '0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d' as const
@@ -193,7 +197,7 @@ function getWagmiConfig() {
     const alchemyKey = (window as any).__ALCHEMY_KEY__
     const rpc = (suffix: string) => alchemyKey ? http(`https://${suffix}.g.alchemy.com/v2/${alchemyKey}`) : http()
     return createConfig({
-        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll],
+        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain],
         connectors: connectorsForWallets(
             [{ groupName: 'Popular', wallets: [injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet] }],
             { appName: 'ENSub', projectId }
@@ -205,7 +209,9 @@ function getWagmiConfig() {
             [arbitrum.id]: rpc('arb-mainnet'),
             [polygon.id]:  rpc('polygon-mainnet'),
             [linea.id]:    rpc('linea-mainnet'),
-            [scroll.id]:   http(), // Alchemy doesn't support Scroll
+            [scroll.id]:      http(),              // Alchemy doesn't support Scroll
+            [celo.id]:        rpc('celo-mainnet'),
+            [worldchain.id]:  http(),              // Alchemy doesn't support World Chain
         },
         ssr: false,
     })

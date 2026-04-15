@@ -11,7 +11,7 @@ import {
     walletConnectWallet,
     safeWallet,
 } from '@rainbow-me/rainbowkit/wallets'
-import { mainnet, base, optimism, arbitrum, polygon, linea, scroll } from 'wagmi/chains'
+import { mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain } from 'wagmi/chains'
 import '@rainbow-me/rainbowkit/styles.css'
 
 interface ChainOption {
@@ -55,12 +55,14 @@ const REGISTRAR_ABI = [
 
 // Map chain IDs to wagmi chain objects and display icons
 const CHAIN_META: Record<number, { wagmiChain: any; icon: string; iconUrl: string }> = {
-    8453:   { wagmiChain: base,     icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
-    10:     { wagmiChain: optimism, icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
-    42161:  { wagmiChain: arbitrum, icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
-    137:    { wagmiChain: polygon,  icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
-    59144:  { wagmiChain: linea,    icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
-    534352: { wagmiChain: scroll,   icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
+    8453:   { wagmiChain: base,       icon: '🔵', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_base.jpg' },
+    10:     { wagmiChain: optimism,   icon: '🔴', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg' },
+    42161:  { wagmiChain: arbitrum,   icon: '🔷', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg' },
+    137:    { wagmiChain: polygon,    icon: '🟣', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg' },
+    59144:  { wagmiChain: linea,      icon: '⬛', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_linea.jpg' },
+    534352: { wagmiChain: scroll,     icon: '🟡', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg' },
+    42220:  { wagmiChain: celo,       icon: '🟢', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_celo.jpg' },
+    480:    { wagmiChain: worldchain, icon: '🌐', iconUrl: 'https://icons.llamao.fi/icons/chains/rsz_world%20chain.jpg' },
 }
 
 const ChainIcon = ({ meta, size = 18 }: { meta?: typeof CHAIN_META[number]; size?: number }) =>
@@ -77,7 +79,7 @@ function getWagmiConfig() {
         ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
         : 'https://cloudflare-eth.com'
     return createConfig({
-        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll],
+        chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll, celo, worldchain],
         connectors: connectorsForWallets(
             [{ groupName: 'Popular', wallets: [injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet, safeWallet] }],
             { appName: 'ENSub', projectId }
@@ -89,7 +91,9 @@ function getWagmiConfig() {
             [arbitrum.id]: http(),
             [polygon.id]:  http(),
             [linea.id]:    http(),
-            [scroll.id]:   http(),
+            [scroll.id]:      http(),
+            [celo.id]:        http(),
+            [worldchain.id]:  http(),
         },
         ssr: false,
     })
