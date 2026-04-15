@@ -390,7 +390,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                         {/* Offchain row — always claimed */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--row-bg)', borderBottom: '1px solid var(--card-border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span>⚡</span>
+                                <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={22} height={22} alt="Ethereum" style={{ borderRadius: '50%' }} />
                                 <div>
                                     <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text)' }}>Offchain</div>
                                     <div style={{ fontSize: '0.71rem', color: 'var(--text-dim)' }}>gasless · no gas fee</div>
@@ -511,7 +511,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                                 fontWeight: !isL2 ? 'bold' : 'normal',
                                 transition: 'all 0.15s',
                             }}>
-                            ⚡ Offchain — gasless
+                            <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={14} height={14} alt="" style={{ borderRadius: '50%', verticalAlign: 'middle' }} /> Offchain — gasless
                         </button>
                         {activeChains.map(ch => {
                             const meta = CHAIN_META[ch.chain_id]
