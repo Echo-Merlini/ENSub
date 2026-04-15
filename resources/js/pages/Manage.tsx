@@ -373,6 +373,10 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [ensResolutionStep, setEnsResolutionStep] = useState('')
     const [ensResolutionError, setEnsResolutionError] = useState('')
 
+    // Section collapse state
+    const [l2SectionOpen, setL2SectionOpen] = useState((tenant.chains ?? []).length > 0)
+    const [ensSectionOpen, setEnsSectionOpen] = useState(tenant.resolver_mode === 'l1resolver')
+
     const handleAddChain = async () => {
         if (!newRegistry.trim() || !newRegistrar.trim()) {
             setChainError('Both addresses are required')
@@ -1094,10 +1098,10 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     borderRadius: '8px', padding: '14px', fontSize: '0.72rem',
                                     color: 'var(--text-muted)', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
                                     fontFamily: "'Fira Code', 'Courier New', monospace", margin: 0,
-                                }}>{`<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="480"\n  height="560"\n  frameborder="0"\n  style="border-radius:12px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`}</pre>
+                                }}>{`<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="520"\n  height="680"\n  frameborder="0"\n  style="border-radius:14px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`}</pre>
                                 <button
                                     onClick={() => {
-                                        const snippet = `<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="480"\n  height="560"\n  frameborder="0"\n  style="border-radius:12px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`
+                                        const snippet = `<iframe\n  src="${window.location.origin}/claim/${tenant.slug}"\n  width="520"\n  height="680"\n  frameborder="0"\n  style="border-radius:14px;border:none;overflow:hidden;"\n  allow="clipboard-write; ethereum"\n></iframe>`
                                         navigator.clipboard.writeText(snippet)
                                         setEmbedCopied(true)
                                         setTimeout(() => setEmbedCopied(false), 2000)
@@ -1116,28 +1120,41 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                         {/* L2 Chains (Durin) */}
                         <div style={{ ...card, marginTop: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
-                                <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0 }}>
+                            {/* Collapsible header */}
+                            <div
+                                onClick={() => setL2SectionOpen(o => !o)}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: l2SectionOpen ? '12px' : 0, gap: '8px' }}>
+                                <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     L2 Claim Chains
+                                    {chains.length > 0 && (
+                                        <span style={{ fontSize: '0.7rem', color: accent, background: `${accent}18`, border: `1px solid ${accent}33`, borderRadius: '10px', padding: '1px 8px', fontWeight: 'normal' }}>
+                                            {chains.filter(c => c.enabled).length} active
+                                        </span>
+                                    )}
                                 </h2>
                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                    {chains.length > 0 && (
+                                    {l2SectionOpen && chains.length > 0 && (
                                         <button
-                                            onClick={handleSyncL2Mints}
+                                            onClick={e => { e.stopPropagation(); handleSyncL2Mints() }}
                                             disabled={syncing}
                                             title="Sync on-chain NameRegistered events into the claims list"
                                             style={{ fontSize: '0.75rem', background: 'var(--row-bg)', border: '1px solid var(--row-border)', color: syncing ? COLORS.dim : COLORS.muted, borderRadius: '6px', padding: '4px 10px', cursor: syncing ? 'not-allowed' : 'pointer' }}>
                                             {syncing ? '⟳ Syncing…' : syncResult || '⟳ Sync mints'}
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => { setAddingChain(a => !a); setChainError('') }}
-                                        style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
-                                        {addingChain ? 'Cancel' : '+ Add chain'}
-                                    </button>
+                                    {l2SectionOpen && (
+                                        <button
+                                            onClick={e => { e.stopPropagation(); setAddingChain(a => !a); setChainError('') }}
+                                            style={{ fontSize: '0.8rem', background: `${accent}18`, border: `1px solid ${accent}44`, color: accent, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
+                                            {addingChain ? 'Cancel' : '+ Add chain'}
+                                        </button>
+                                    )}
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', userSelect: 'none' as const }}>{l2SectionOpen ? '▾' : '▸'}</span>
                                 </div>
                             </div>
 
+                            {l2SectionOpen && (
+                            <>
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px', marginTop: 0 }}>
                                 Let claimants mint subdomains as NFTs on L2 chains via <a href="https://durin.dev" target="_blank" rel="noreferrer" style={{ color: accent }}>Durin</a>.
                                 Each chain needs a deployed L2Registry and L2Registrar contract.
@@ -1458,15 +1475,29 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     </button>
                                 </div>
                             )}
+                            </>
+                            )}
                         </div>
 
                         {/* ENS On-chain Resolution (Phase 2) */}
                         {chains.length > 0 && (
                             <div style={{ ...card, marginTop: '8px' }}>
-                                <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', marginBottom: '4px' }}>
-                                    ENS On-chain Resolution
-                                </h2>
-                                <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '16px', lineHeight: '1.55' }}>
+                                {/* Collapsible header */}
+                                <div
+                                    onClick={() => setEnsSectionOpen(o => !o)}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: ensSectionOpen ? '4px' : 0 }}>
+                                    <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        ENS On-chain Resolution
+                                        <span style={{ fontSize: '0.7rem', fontWeight: 'normal', color: resolverMode === 'l1resolver' ? accent : '#ff6666', background: resolverMode === 'l1resolver' ? `${accent}18` : 'rgba(255,100,100,0.1)', border: `1px solid ${resolverMode === 'l1resolver' ? accent + '33' : 'rgba(255,100,100,0.25)'}`, borderRadius: '10px', padding: '1px 8px' }}>
+                                            {resolverMode === 'l1resolver' ? '● on-chain' : '● offchain'}
+                                        </span>
+                                    </h2>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', userSelect: 'none' as const }}>{ensSectionOpen ? '▾' : '▸'}</span>
+                                </div>
+
+                                {ensSectionOpen && (
+                                <>
+                                <p style={{ color: COLORS.muted, fontSize: '0.78rem', marginBottom: '16px', marginTop: '8px', lineHeight: '1.55' }}>
                                     Allow <strong style={{ color: COLORS.text }}>*.{tenant.ens_domain}</strong> subdomains to resolve on-chain (wallets, dApps, viem).
                                     Requires two Ethereum mainnet steps — switch resolver once, then register each L2 chain.
                                 </p>
@@ -1567,6 +1598,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                 )}
                                 {ensResolutionStep && !ensResolutionError && (
                                     <p style={{ color: accent, fontSize: '0.8rem', marginTop: '10px', marginBottom: 0 }}>⟳ {ensResolutionStep}</p>
+                                )}
+                                </>
                                 )}
                             </div>
                         )}
