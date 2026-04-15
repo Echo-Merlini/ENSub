@@ -274,6 +274,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
     const [chains, setChains] = useState<ChainEntry[]>(tenant.chains ?? [])
     const [addingChain, setAddingChain] = useState(false)
     const [newChainId, setNewChainId] = useState<number>(8453)
+    const [chainDropdownOpen, setChainDropdownOpen] = useState(false)
     const [newRegistry, setNewRegistry] = useState('')
     const [newRegistrar, setNewRegistrar] = useState('')
     const [chainSaving, setChainSaving] = useState(false)
@@ -1305,15 +1306,39 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                             {/* Add chain form */}
                             {addingChain && (
                                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {/* Chain selector */}
-                                    <select
-                                        value={newChainId}
-                                        onChange={e => { setNewChainId(Number(e.target.value)); setNewRegistry('') }}
-                                        style={{ ...inputStyle, cursor: 'pointer' }}>
-                                        {DURIN_CHAINS.filter(c => !chains.find(ch => ch.chain_id === c.id)).map(c => (
-                                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                                        ))}
-                                    </select>
+                                    {/* Chain selector — custom dropdown to show logo images */}
+                                    {(() => {
+                                        const available = DURIN_CHAINS.filter(c => !chains.find(ch => ch.chain_id === c.id))
+                                        const selected = DURIN_CHAINS.find(c => c.id === newChainId)
+                                        return (
+                                            <div style={{ position: 'relative' as const }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setChainDropdownOpen(o => !o)}
+                                                    style={{ ...inputStyle, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'space-between', textAlign: 'left' as const }}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        {selected && <ChainIcon chain={selected} />}
+                                                        {selected?.name ?? 'Select chain'}
+                                                    </span>
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>▾</span>
+                                                </button>
+                                                {chainDropdownOpen && (
+                                                    <div style={{ position: 'absolute' as const, top: '100%', left: 0, right: 0, zIndex: 50, marginTop: '2px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+                                                        {available.map(c => (
+                                                            <button
+                                                                key={c.id}
+                                                                type="button"
+                                                                onClick={() => { setNewChainId(c.id); setNewRegistry(''); setChainDropdownOpen(false) }}
+                                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 12px', background: c.id === newChainId ? `${accent}18` : 'transparent', border: 'none', color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left' as const }}>
+                                                                <ChainIcon chain={c} />
+                                                                {c.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })()}
 
                                     {/* L2Registry address — paste existing or leave blank to deploy fresh */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
