@@ -1520,7 +1520,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     onClick={() => setEnsSectionOpen(o => !o)}
                                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: ensSectionOpen ? '4px' : 0 }}>
                                     <h2 style={{ color: 'var(--text)', fontSize: '1rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        ENS On-chain Resolution
+                                        ENS L2s On-Chain Resolution
                                         <span style={{ fontSize: '0.7rem', fontWeight: 'normal', color: resolverMode === 'l1resolver' ? accent : '#ff6666', background: resolverMode === 'l1resolver' ? `${accent}18` : 'rgba(255,100,100,0.1)', border: `1px solid ${resolverMode === 'l1resolver' ? accent + '33' : 'rgba(255,100,100,0.25)'}`, borderRadius: '10px', padding: '1px 8px' }}>
                                             {resolverMode === 'l1resolver' ? '● on-chain' : '● offchain'}
                                         </span>
