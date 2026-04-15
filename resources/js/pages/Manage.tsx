@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
-import { waitForTransactionReceipt, deployContract, readContract } from '@wagmi/core'
+import { waitForTransactionReceipt, deployContract, readContract, getChainId } from '@wagmi/core'
 import { decodeEventLog, namehash } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
@@ -185,7 +185,7 @@ const queryClient = new QueryClient()
 function getWagmiConfig() {
     const projectId = (window as any).__WALLETCONNECT_PROJECT_ID__ || '3b3f1c4ecbfa7edd5c5327b56985074a'
     const alchemyKey = (window as any).__ALCHEMY_KEY__
-    const rpcUrl = alchemyKey ? `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}` : 'https://cloudflare-eth.com'
+    const rpc = (suffix: string) => alchemyKey ? http(`https://${suffix}.g.alchemy.com/v2/${alchemyKey}`) : http()
     return createConfig({
         chains: [mainnet, base, optimism, arbitrum, polygon, linea, scroll],
         connectors: connectorsForWallets(
@@ -193,13 +193,13 @@ function getWagmiConfig() {
             { appName: 'ENSub', projectId }
         ),
         transports: {
-            [mainnet.id]:  http(rpcUrl),
-            [base.id]:     http(),
-            [optimism.id]: http(),
-            [arbitrum.id]: http(),
-            [polygon.id]:  http(),
-            [linea.id]:    http(),
-            [scroll.id]:   http(),
+            [mainnet.id]:  rpc('eth-mainnet'),
+            [base.id]:     rpc('base-mainnet'),
+            [optimism.id]: rpc('opt-mainnet'),
+            [arbitrum.id]: rpc('arb-mainnet'),
+            [polygon.id]:  rpc('polygon-mainnet'),
+            [linea.id]:    rpc('linea-mainnet'),
+            [scroll.id]:   http(), // Alchemy doesn't support Scroll
         },
         ssr: false,
     })
@@ -413,8 +413,14 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         setChainError('')
         setDeployStep('')
         try {
-            if (currentChainId !== ch.chain_id) {
+            if (getChainId(wagmiConfig) !== ch.chain_id) {
                 await switchChain({ chainId: ch.chain_id })
+                // Wait until the connector has actually switched
+                for (let i = 0; i < 20; i++) {
+                    await new Promise(r => setTimeout(r, 250))
+                    if (getChainId(wagmiConfig) === ch.chain_id) break
+                    if (i === 19) throw new Error(`Wallet did not switch to chain ${ch.chain_id}. Please switch manually in MetaMask and try again.`)
+                }
             }
             setDeployStep('1/2 Deploying registrar…')
             const rePriceWei = registrarType === 'ensub'
@@ -484,8 +490,13 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         setChainError('')
         setDeployStep('')
         try {
-            if (currentChainId !== newChainId) {
+            if (getChainId(wagmiConfig) !== newChainId) {
                 await switchChain({ chainId: newChainId })
+                for (let i = 0; i < 20; i++) {
+                    await new Promise(r => setTimeout(r, 250))
+                    if (getChainId(wagmiConfig) === newChainId) break
+                    if (i === 19) throw new Error(`Wallet did not switch to chain ${newChainId}. Please switch manually in MetaMask and try again.`)
+                }
             }
 
             let registryAddr = newRegistry.trim()
