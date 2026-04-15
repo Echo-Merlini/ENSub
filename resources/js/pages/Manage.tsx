@@ -284,6 +284,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
     // Phase 4: per-chain registrar settings panel (for already-deployed ENSubRegistrar)
     const [settingsChainId, setSettingsChainId] = useState<number | null>(null)
+    const [fixChainId, setFixChainId] = useState<number | null>(null)
     interface RegistrarSettings { price: string; treasury: string; limitToOne: boolean; paused: boolean; loading: boolean; saving: string; error: string }
     const [registrarSettings, setRegistrarSettings] = useState<Record<number, RegistrarSettings>>({})
 
@@ -1129,6 +1130,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                             {chains.map(ch => {
                                 const meta = DURIN_CHAINS.find(c => c.id === ch.chain_id)
                                 const settingsOpen = settingsChainId === ch.chain_id
+                                const fixOpen = fixChainId === ch.chain_id
                                 const s = registrarSettings[ch.chain_id]
                                 return (
                                     <div key={ch.chain_id} style={{ borderBottom: '1px solid var(--row-border)' }}>
@@ -1155,11 +1157,15 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                 ⚙ Settings
                                             </button>
                                             <button
-                                                onClick={() => handleRedeployRegistrar(ch)}
+                                                onClick={() => {
+                                                    if (chainSaving) return
+                                                    setFixChainId(fixOpen ? null : ch.chain_id)
+                                                    setSettingsChainId(null)
+                                                }}
                                                 disabled={chainSaving}
-                                                title="Redeploy L2Registrar and re-authorize it on the registry"
-                                                style={{ fontSize: '0.75rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '5px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '3px 9px', opacity: chainSaving ? 0.5 : 1, fontWeight: 'bold', whiteSpace: 'nowrap' as const }}>
-                                                {chainSaving && deployStep ? deployStep : '⚙ Fix'}
+                                                title="Redeploy registrar — choose type first"
+                                                style={{ fontSize: '0.75rem', color: fixOpen ? '#f59e0b' : '#f59e0b', background: fixOpen ? 'rgba(245,158,11,0.2)' : 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '5px', cursor: chainSaving ? 'not-allowed' : 'pointer', padding: '3px 9px', opacity: chainSaving ? 0.5 : 1, fontWeight: 'bold', whiteSpace: 'nowrap' as const }}>
+                                                {chainSaving && deployStep ? deployStep : (fixOpen ? '✕ Fix' : '⚙ Fix')}
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveChain(ch.chain_id)}
@@ -1233,6 +1239,53 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                         {s.error && <p style={{ fontSize: '0.75rem', color: '#ff4444', margin: 0 }}>{s.error}</p>}
                                                     </>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {/* Fix panel — choose registrar type before deploying */}
+                                        {fixOpen && !chainSaving && (
+                                            <div style={{ margin: '0 0 10px', padding: '14px', background: 'rgba(245,158,11,0.06)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                <p style={{ fontSize: '0.78rem', color: '#f59e0b', margin: 0, fontWeight: 'bold' }}>
+                                                    ⚠ Redeploy registrar — keeps registry + all NFTs
+                                                </p>
+
+                                                {/* Registrar type selector */}
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    {(['open', 'ensub'] as const).map(t => (
+                                                        <button
+                                                            key={t}
+                                                            onClick={() => setRegistrarType(t)}
+                                                            style={{ flex: 1, padding: '8px', background: registrarType === t ? `${accent}22` : 'var(--row-bg)', border: `1px solid ${registrarType === t ? accent + '66' : 'var(--card-border)'}`, color: registrarType === t ? accent : 'var(--text-muted)', borderRadius: '7px', fontSize: '0.78rem', fontWeight: registrarType === t ? 'bold' : 'normal', cursor: 'pointer' }}>
+                                                            {t === 'open' ? '🔓 Open (free, no limits)' : '🔒 ENSub (1-per-wallet, paid)'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                {/* ENSub config */}
+                                                {registrarType === 'ensub' && (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--row-bg)', borderRadius: '7px', border: '1px solid var(--row-border)' }}>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Mint price (ETH, 0 = free)</span>
+                                                                <input style={inputStyle} type="number" min="0" step="0.001" value={ensubPrice} onChange={e => setEnsubPrice(e.target.value)} placeholder="0" />
+                                                            </div>
+                                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Treasury (blank = your wallet)</span>
+                                                                <input style={inputStyle} value={ensubTreasury} onChange={e => setEnsubTreasury(e.target.value)} placeholder="0x…" />
+                                                            </div>
+                                                        </div>
+                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                                            <input type="checkbox" checked={ensubLimitToOne} onChange={e => setEnsubLimitToOne(e.target.checked)} />
+                                                            1-per-wallet on-chain enforcement
+                                                        </label>
+                                                    </div>
+                                                )}
+
+                                                <button
+                                                    onClick={() => { setFixChainId(null); handleRedeployRegistrar(ch) }}
+                                                    style={{ padding: '9px 18px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.5)', color: '#f59e0b', borderRadius: '7px', fontSize: '0.82rem', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                                                    Deploy {registrarType === 'ensub' ? '🔒 ENSub' : '🔓 Open'} registrar →
+                                                </button>
                                             </div>
                                         )}
                                     </div>
