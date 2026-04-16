@@ -98,8 +98,10 @@ class EmailTemplateResource extends Resource
 
                         $rendered = $record->render($vars);
 
-                        Mail::html($rendered['body'], function ($m) use ($data, $rendered) {
-                            $m->to($data['email'])->subject('[TEST] ' . $rendered['subject']);
+                        Mail::send([], [], function ($m) use ($data, $rendered) {
+                            $m->to($data['email'])
+                              ->subject('[TEST] ' . $rendered['subject'])
+                              ->setBody($rendered['body'], 'text/html');
                         });
 
                         Notification::make()
