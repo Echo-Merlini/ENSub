@@ -47,7 +47,7 @@ RUN composer dump-autoload --no-dev --optimize
 # Laravel bootstrap
 RUN php artisan config:clear \
  && php artisan storage:link \
- && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
+ && mkdir -p storage/framework/{sessions,views,cache/data} storage/logs bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache public/build
 
