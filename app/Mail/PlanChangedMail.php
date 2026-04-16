@@ -61,6 +61,6 @@ class PlanChangedMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.raw', with: ['htmlBody' => $this->resolvedBody]);
+        return new Content(htmlString: $this->resolvedBody);
     }
 }

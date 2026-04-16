@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmailTemplateResource\Pages;
+use App\Mail\RawHtmlMail;
 use App\Models\EmailTemplate;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -98,11 +99,8 @@ class EmailTemplateResource extends Resource
 
                         $rendered = $record->render($vars);
 
-                        Mail::send([], [], function ($m) use ($data, $rendered) {
-                            $m->to($data['email'])
-                              ->subject('[TEST] ' . $rendered['subject'])
-                              ->setBody($rendered['body'], 'text/html');
-                        });
+                        Mail::to($data['email'])
+                            ->send(new RawHtmlMail('[TEST] ' . $rendered['subject'], $rendered['body']));
 
                         Notification::make()
                             ->title('Test email sent')
