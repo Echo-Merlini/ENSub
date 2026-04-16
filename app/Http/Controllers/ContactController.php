@@ -33,7 +33,7 @@ h2{color:#fff;margin-top:0}label{color:#888;font-size:12px;text-transform:upperc
 <label>Message</label><p>{$message}</p>
 </div></body></html>";
 
-        Mail::to(config('mail.contact_destination', 'merloproductions@gmail.com'))
+        Mail::to('mail@ensub.org')
             ->send(new RawHtmlMail("ENSub contact: {$name}", $html));
 
         return response()->json(['success' => true]);
