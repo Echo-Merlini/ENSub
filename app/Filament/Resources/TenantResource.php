@@ -3,12 +3,15 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TenantResource\Pages;
+use App\Mail\AdminMail;
 use App\Models\Tenant;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
 
 class TenantResource extends Resource
 {
@@ -97,6 +100,41 @@ class TenantResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('send_email')
+                    ->label('Send Email')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\Placeholder::make('recipient')
+                            ->label('To')
+                            ->content(fn (Tenant $record) => $record->billing_email ?: '⚠ No billing email on record'),
+                        Forms\Components\TextInput::make('subject')
+                            ->required()
+                            ->placeholder('Subject line'),
+                        Forms\Components\Textarea::make('body')
+                            ->required()
+                            ->rows(8)
+                            ->placeholder('Message body…'),
+                    ])
+                    ->action(function (Tenant $record, array $data): void {
+                        if (! $record->billing_email) {
+                            Notification::make()
+                                ->title('No email address')
+                                ->body('This tenant has no billing email — cannot send.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        Mail::to($record->billing_email)
+                            ->send(new AdminMail($data['subject'], $data['body'], $record->name));
+
+                        Notification::make()
+                            ->title('Email sent')
+                            ->body("Sent to {$record->billing_email}")
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

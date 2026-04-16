@@ -2,7 +2,9 @@
 
 namespace App\Listeners;
 
+use App\Mail\PlanChangedMail;
 use App\Models\Tenant;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Events\WebhookReceived;
 
 class UpdateTenantPlanOnSubscription
@@ -28,7 +30,9 @@ class UpdateTenantPlanOnSubscription
         if (! $tenant) return;
 
         if ($type === 'customer.subscription.deleted') {
+            $previousPlan = $tenant->plan;
             $tenant->update(['plan' => 'free', 'claim_limit' => 50]);
+            $this->sendPlanEmail($tenant, 'free', $previousPlan);
             return;
         }
 
@@ -40,9 +44,21 @@ class UpdateTenantPlanOnSubscription
         $plan = $metadata['plan'] ?? null;
 
         if ($plan === 'pro') {
+            $previousPlan = $tenant->plan;
             $tenant->update(['plan' => 'pro', 'claim_limit' => 500]);
+            $this->sendPlanEmail($tenant, 'pro', $previousPlan);
         } elseif ($plan === 'business') {
+            $previousPlan = $tenant->plan;
             $tenant->update(['plan' => 'business', 'claim_limit' => 10000]);
+            $this->sendPlanEmail($tenant, 'business', $previousPlan);
         }
+    }
+
+    private function sendPlanEmail(Tenant $tenant, string $newPlan, string $previousPlan): void
+    {
+        if (! $tenant->billing_email) return;
+        if ($newPlan === $previousPlan) return;
+
+        Mail::to($tenant->billing_email)->send(new PlanChangedMail($tenant, $newPlan, $previousPlan));
     }
 }
