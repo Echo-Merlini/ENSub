@@ -8,6 +8,7 @@ class StripeSettings extends Page
 {
     protected static ?string $navigationIcon  = 'heroicon-o-credit-card';
     protected static ?string $navigationLabel = 'Stripe Settings';
+    protected static ?string $navigationGroup = 'Settings';
     protected static ?string $title           = 'Stripe Settings';
     protected static ?int    $navigationSort  = 10;
 

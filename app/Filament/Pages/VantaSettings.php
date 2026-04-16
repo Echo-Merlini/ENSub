@@ -14,6 +14,7 @@ class VantaSettings extends Page implements Forms\Contracts\HasForms
 
     protected static ?string $navigationIcon  = 'heroicon-o-sparkles';
     protected static ?string $navigationLabel = 'Background';
+    protected static ?string $navigationGroup = 'Settings';
     protected static ?string $title           = 'Animated Background';
     protected static string  $view            = 'filament.pages.vanta-settings';
 
