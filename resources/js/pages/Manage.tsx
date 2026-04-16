@@ -1021,8 +1021,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                                         {c.full_name}
                                                     </p>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                                                        <span style={{ fontSize: '0.7rem', color: '#00c850', background: 'rgba(0,200,80,0.1)', border: '1px solid rgba(0,200,80,0.2)', borderRadius: '3px', padding: '1px 5px' }}>
-                                                            Ξ ETH
+                                                        <span style={{ fontSize: '0.7rem', color: '#00c850', background: 'rgba(0,200,80,0.1)', border: '1px solid rgba(0,200,80,0.2)', borderRadius: '3px', padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                            <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={10} height={10} alt="ETH" style={{ borderRadius: '50%', verticalAlign: 'middle' }} /> ETH
                                                         </span>
                                                         {(c.minted_chains ?? []).map(cid => {
                                                             const meta = DURIN_CHAINS.find(d => d.id === cid)
