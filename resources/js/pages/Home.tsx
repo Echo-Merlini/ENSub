@@ -593,10 +593,12 @@ export default function Home() {
                 flexWrap: 'wrap',
                 gap: '16px',
             }}>
-                <span style={{ color: ACCENT, fontWeight: 'bold', textShadow: `0 0 8px ${ACCENT}60` }}>ENSub</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img src="/images/ensub-logo.gif" alt="ENSub" style={{ width: '28px', height: '28px', borderRadius: '6px' }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: ACCENT, border: `1px solid ${ACCENT}55`, borderRadius: '6px', padding: '2px 8px', letterSpacing: '0.05em' }}>ENSub</span>
+                </div>
                 <div style={{ display: 'flex', gap: '24px' }}>
                     <a href="#pricing" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none' }}>Pricing</a>
-                    <a href="/admin" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none' }}>Admin</a>
                     <a href="/start" style={{ color: '#444', fontSize: '0.8rem', textDecoration: 'none' }}>Get started</a>
                 </div>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
