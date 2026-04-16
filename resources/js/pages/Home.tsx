@@ -185,6 +185,103 @@ function FAQ() {
     )
 }
 
+// ─── Get in Touch ─────────────────────────────────────────────────────────────
+
+function GetInTouch({ accent }: { accent: string }) {
+    const [open, setOpen] = useState(false)
+    const [form, setForm] = useState({ name: '', email: '', message: '' })
+    const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+    const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setStatus('sending')
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            })
+            if (!res.ok) throw new Error()
+            setStatus('sent')
+            setForm({ name: '', email: '', message: '' })
+        } catch {
+            setStatus('error')
+        }
+    }
+
+    const inputStyle: React.CSSProperties = {
+        width: '100%', boxSizing: 'border-box',
+        background: 'var(--input-bg)', border: '1px solid var(--input-border)',
+        borderRadius: '8px', padding: '10px 14px', color: 'var(--text)',
+        fontSize: '0.9rem', outline: 'none',
+    }
+
+    return (
+        <section style={{ padding: '0 24px 64px', maxWidth: '700px', margin: '0 auto' }}>
+            <button
+                onClick={() => setOpen(o => !o)}
+                style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: 'transparent', border: `1px solid ${open ? accent + '44' : 'var(--input-border)'}`,
+                    borderRadius: '10px', padding: '14px 20px', cursor: 'pointer',
+                    color: open ? accent : 'var(--text-muted)', fontSize: '0.95rem', fontWeight: 600,
+                    transition: 'all 0.2s',
+                }}
+            >
+                <span>Get in Touch</span>
+                <span style={{ fontSize: '0.8rem', transition: 'transform 0.2s', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none' }}>▾</span>
+            </button>
+
+            {open && (
+                <div style={{
+                    marginTop: '2px', border: `1px solid ${accent}33`, borderRadius: '10px',
+                    padding: '24px', background: 'var(--card-bg)',
+                }}>
+                    {status === 'sent' ? (
+                        <p style={{ textAlign: 'center', color: accent, fontWeight: 600, margin: 0 }}>
+                            ✓ Message sent — we'll get back to you soon.
+                        </p>
+                    ) : (
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '6px' }}>Name</label>
+                                    <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Your name" required />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '6px' }}>Email</label>
+                                    <input type="email" style={inputStyle} value={form.email} onChange={e => set('email', e.target.value)} placeholder="you@example.com" required />
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '6px' }}>Message</label>
+                                <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: '100px' }} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Tell us about your project…" required />
+                            </div>
+                            {status === 'error' && (
+                                <p style={{ color: '#f87171', fontSize: '0.8rem', margin: 0 }}>Something went wrong — please try again.</p>
+                            )}
+                            <button
+                                type="submit"
+                                disabled={status === 'sending'}
+                                style={{
+                                    alignSelf: 'flex-end', padding: '10px 24px', background: accent,
+                                    color: '#000', border: 'none', borderRadius: '8px', fontWeight: 700,
+                                    cursor: status === 'sending' ? 'not-allowed' : 'pointer', opacity: status === 'sending' ? 0.7 : 1,
+                                    fontSize: '0.9rem',
+                                }}
+                            >
+                                {status === 'sending' ? 'Sending…' : 'Send message'}
+                            </button>
+                        </form>
+                    )}
+                </div>
+            )}
+        </section>
+    )
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -482,6 +579,9 @@ export default function Home() {
                     <a href="/start" style={btnPrimary}>Launch your subdomain page →</a>
                 </div>
             </section>
+
+            {/* Get in Touch */}
+            <GetInTouch accent={ACCENT} />
 
             {/* Footer */}
             <footer style={{

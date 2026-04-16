@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\TenantChainController;
 use App\Http\Controllers\Api\ClaimApiController;
@@ -51,6 +52,9 @@ Route::prefix('api/onboard')->group(function () {
 
 // NFT metadata (ERC721 tokenURI endpoint)
 Route::get('/nft/{slug}/{chainId}/{tokenId}', [NftMetadataController::class, 'show']);
+
+// Contact form
+Route::post('/api/contact', [ContactController::class, 'store']);
 
 // Billing API
 Route::prefix('api/billing')->group(function () {
