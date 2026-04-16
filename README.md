@@ -309,6 +309,23 @@ function balanceOf(address owner) external view returns (uint256);
 
 ---
 
+## Future enhancements
+
+### XMTP web3 messaging
+[XMTP](https://xmtp.org) (v3, MLS-based, quantum-resistant e2e encryption) is a strong candidate for adding wallet-to-wallet messaging to ENSub. The main use case would be project owners broadcasting messages to all their subdomain holders directly from the Manage page — no email required, wallet-native.
+
+**Current blocker:** XMTP resolves root ENS names (`vitalik.eth`) and Base names but does **not** currently resolve ENS subdomains whose resolver implements EIP-3668 CCIP-Read. Tested on `xmtp.chat` — `alice.pixelgoblins.eth` returns invalid, raw wallet address works fine. A question has been raised on the XMTP forum requesting CCIP-Read subdomain support.
+
+**When unblocked, planned phases:**
+1. Claim page: optional "Activate web3 inbox" step after claiming (one wallet signature)
+2. Manage page: "Message community" broadcast to all subdomain holders by wallet address
+3. XMTP as an additional notification channel alongside email (plan changes, limit reached)
+4. Token-gated group chat per ENS domain (MLS group, membership synced with claims)
+
+Tracking: [xmtp.org/docs](https://docs.xmtp.org) · SDK: `@xmtp/browser-sdk` · Vite note: requires `optimizeDeps: { exclude: ['@xmtp/browser-sdk'] }`
+
+---
+
 ## Known limitations
 
 - **Revoke doesn't burn L2 NFT** — neither the Durin L2Registry nor the open L2Registrar has a burn function. Revoke on the Manage page removes the Namestone offchain record only; the on-chain NFT stays.
