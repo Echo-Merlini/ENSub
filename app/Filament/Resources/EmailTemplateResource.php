@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmailTemplateResource\Pages;
 use App\Mail\RawHtmlMail;
 use App\Models\EmailTemplate;
+use App\Models\Tenant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -105,6 +106,61 @@ class EmailTemplateResource extends Resource
                         Notification::make()
                             ->title('Test email sent')
                             ->body('Sent to ' . $data['email'])
+                            ->success()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('send_all')
+                    ->label('Send to all')
+                    ->icon('heroicon-o-megaphone')
+                    ->color('warning')
+                    ->visible(fn (EmailTemplate $record) => $record->type === 'newsletter')
+                    ->form(function (EmailTemplate $record) {
+                        $count = Tenant::whereNotNull('billing_email')->count();
+                        return [
+                            Forms\Components\Placeholder::make('info')
+                                ->label('')
+                                ->content("Will send to {$count} tenant(s) with a notification email set."),
+                            Forms\Components\TextInput::make('subject')
+                                ->required()
+                                ->default($record->subject)
+                                ->label('Subject (override)'),
+                            Forms\Components\Textarea::make('body_override')
+                                ->rows(6)
+                                ->label('Body content (replaces {body} placeholder)')
+                                ->placeholder('Leave blank to use the template as-is'),
+                        ];
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading('Send newsletter to all tenants')
+                    ->modalDescription('This will send a real email to every tenant with a notification email.')
+                    ->modalSubmitActionLabel('Send now')
+                    ->action(function (EmailTemplate $record, array $data): void {
+                        $tenants = Tenant::whereNotNull('billing_email')->get();
+                        $sent = 0;
+
+                        foreach ($tenants as $tenant) {
+                            $vars = [
+                                'tenant_name'   => $tenant->name,
+                                'tenant_domain' => $tenant->ens_domain,
+                                'tenant_slug'   => $tenant->slug,
+                                'dashboard_url' => 'https://ensub.org/manage/' . $tenant->slug,
+                                'body'          => $data['body_override']
+                                    ? nl2br(e($data['body_override']))
+                                    : '',
+                            ];
+
+                            $rendered = $record->render($vars);
+                            $subject  = $data['subject'] ?: $rendered['subject'];
+
+                            Mail::to($tenant->billing_email)
+                                ->send(new RawHtmlMail($subject, $rendered['body']));
+
+                            $sent++;
+                        }
+
+                        Notification::make()
+                            ->title('Newsletter sent')
+                            ->body("Sent to {$sent} tenant(s).")
                             ->success()
                             ->send();
                     }),
