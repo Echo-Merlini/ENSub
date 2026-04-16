@@ -341,7 +341,10 @@ function balanceOf(address owner) external view returns (uint256);
   - ENS On-chain Resolution: set/revert resolver + register L2 registries on mainnet
   - Claims list: `Ξ ETH` badge + per-chain mint badges; per-row revoke
   - Share card (Twitter/X, Farcaster, copy link) · Embed widget (Pro/Business only)
-- **Filament admin** at `/admin` — tenant management, claims list with L2 Mints column
+- **Filament admin** at `/admin` — tenant management, claims list with L2 Mints column; Send Email action per tenant
+- **Email system** — Lettr (lettr.com) via `mail.ensub.org`; DB-backed editable templates; plan change / cancellation auto-emails; newsletter broadcast; send test action
+- **Notifications** — tenants set a notification email from the Manage page; used for plan change and future automated emails
+- **Contact form** — "Get in Touch" collapsible form on Home page; sends to `mail@ensub.org`
 - **Stripe billing** — Free: 50 claims · Pro: 500 · Business: unlimited
 
 ---
@@ -368,6 +371,9 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_PRO=
 STRIPE_PRICE_BUSINESS=
 NAMESTONE_API_KEY=
+MAIL_MAILER=lettr
+MAIL_FROM_ADDRESS="hello@mail.ensub.org"
+LETTR_API_KEY=
 ```
 
 ---
@@ -379,6 +385,20 @@ NAMESTONE_API_KEY=
 - Persistent SQLite on a mounted host volume
 - `php artisan migrate` + `db:seed` run on each deploy (entrypoint.sh)
 - L2 sync runs via Laravel Scheduler every 15 minutes inside the container (supervisord)
+
+---
+
+## Email system (Lettr)
+
+- Provider: [Lettr](https://lettr.com) — free tier (3k/mo, 100/day)
+- Sending domain: `mail.ensub.org` (SPF + DKIM + DMARC verified on Cloudflare)
+- From address: `hello@mail.ensub.org`
+- Contact destination: `mail@ensub.org` (alias → merloproductions@gmail.com)
+- Templates stored in `email_templates` DB table — editable from Filament admin at `/admin/email-templates`
+- Template types: `plan_upgraded_pro`, `plan_upgraded_business`, `plan_cancelled`, `admin_manual`, `newsletter`
+- Supports `{placeholder}` substitution: `{tenant_name}`, `{tenant_domain}`, `{tenant_slug}`, `{new_plan}`, `{previous_plan}`, `{claim_limit}`, `{dashboard_url}`, `{body}`
+- Newsletter: "Send to all" action broadcasts to all tenants with `billing_email` set
+- Admin manual send: envelope icon on each tenant row in Filament
 
 ---
 
