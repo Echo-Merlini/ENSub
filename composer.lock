@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "151240ca8441a7ed2ff877790ef76b10",
+    "content-hash": "bb2449106dc1d7d4d4173e8e53475d4b",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3283,6 +3283,140 @@
                 }
             ],
             "time": "2026-03-08T20:05:35+00:00"
+        },
+        {
+            "name": "lettr/lettr-laravel",
+            "version": "v1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lettr-com/lettr-laravel.git",
+                "reference": "fb14b688749160a2e8860b8a7cba34bb58873226"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lettr-com/lettr-laravel/zipball/fb14b688749160a2e8860b8a7cba34bb58873226",
+                "reference": "fb14b688749160a2e8860b8a7cba34bb58873226",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "lettr/lettr-php": "^1.3.0",
+                "php": "^8.4",
+                "symfony/mailer": "^6.2|^7.0|^8.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.0|^3.0",
+                "laravel/pint": "^1.18",
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^8.17|^9.0|^10.8|^11.0",
+                "pestphp/pest": "^2.0|^3.7"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Lettr": "Lettr\\Laravel\\Facades\\Lettr"
+                    },
+                    "providers": [
+                        "Lettr\\Laravel\\LettrServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Lettr\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Lettr and contributors",
+                    "homepage": "https://github.com/TOPOL-io/lettr-laravel/contributors"
+                }
+            ],
+            "description": "Lettr for Laravel - Official Laravel integration for Lettr email API",
+            "homepage": "https://lettr.com/",
+            "keywords": [
+                "api",
+                "client",
+                "email",
+                "laravel",
+                "lettr",
+                "php",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/lettr-com/lettr-laravel/issues",
+                "source": "https://github.com/lettr-com/lettr-laravel/tree/v1.4.0"
+            },
+            "time": "2026-03-21T10:16:35+00:00"
+        },
+        {
+            "name": "lettr/lettr-php",
+            "version": "v1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/lettr-com/lettr-php.git",
+                "reference": "15a5eab55a96f25e1f04656e4da64fa368ce601f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/lettr-com/lettr-php/zipball/15a5eab55a96f25e1f04656e4da64fa368ce601f",
+                "reference": "15a5eab55a96f25e1f04656e4da64fa368ce601f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.5",
+                "php": "^8.4"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.18",
+                "pestphp/pest": "^3.0",
+                "phpstan/phpstan": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Lettr\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Lettr",
+                    "homepage": "https://lettr.com/"
+                }
+            ],
+            "description": "Lettr PHP SDK - Send emails via Lettr API",
+            "homepage": "https://lettr.com/",
+            "keywords": [
+                "api",
+                "client",
+                "email",
+                "lettr",
+                "php",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/lettr-com/lettr-php/issues",
+                "source": "https://github.com/lettr-com/lettr-php/tree/v1.3.0"
+            },
+            "time": "2026-03-21T07:52:47+00:00"
         },
         {
             "name": "livewire/livewire",
