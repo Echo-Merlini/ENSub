@@ -743,9 +743,12 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                 </div>
 
                                 {tenant.plan === 'free' && (
-                                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                                    <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                                         Powered by{' '}
-                                        <a href="/" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>ENSub</a>
+                                        <a href="https://ensub.org" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', textDecoration: 'none' }}>
+                                            <img src="/images/ensub-logo.png" alt="ENSub" style={{ height: '13px', opacity: 0.7 }} />
+                                            <span style={{ textDecoration: 'underline' }}>ENSub.org</span>
+                                        </a>
                                     </p>
                                 )}
                             </div>
