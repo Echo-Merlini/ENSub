@@ -80,6 +80,7 @@ class ClaimController extends Controller
                 'min_balance'         => $tenant->gateConfig?->min_balance,
                 'allowlist_addresses' => $tenant->gateConfig?->allowlist_addresses,
                 'namestone_api_key' => $tenant->namestone_api_key,
+                'billing_email'     => $tenant->billing_email,
                 'resolver_mode'     => $tenant->resolver_mode ?? 'namestone',
                 'claims'            => $tenant->claims()->latest()->get()->map(fn($c) => [
                     'id'             => $c->id,
@@ -140,6 +141,7 @@ class ClaimController extends Controller
             'logo_url'            => 'nullable|url|max:500',
             'accent_color'        => 'nullable|string|max:7',
             'namestone_api_key'   => 'required|string',
+            'billing_email'       => 'nullable|email|max:255',
             'gate_type'           => 'required|in:open,nft,token,allowlist',
             'contract_address'    => 'nullable|string',
             'collection_slug'     => 'nullable|string',
@@ -153,6 +155,7 @@ class ClaimController extends Controller
             'logo_url'          => $validated['logo_url'] ?? null,
             'accent_color'      => $validated['accent_color'] ?? $tenant->accent_color,
             'namestone_api_key' => $validated['namestone_api_key'],
+            'billing_email'     => $validated['billing_email'] ?? null,
             'claim_limit'       => $validated['claim_limit'] ?? $tenant->claim_limit,
         ]);
 

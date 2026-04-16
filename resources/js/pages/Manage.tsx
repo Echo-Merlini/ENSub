@@ -187,6 +187,7 @@ interface TenantData {
     min_balance: string | null
     allowlist_addresses: string | null
     namestone_api_key: string
+    billing_email: string | null
     resolver_mode: 'namestone' | 'l1resolver'
     claims: ClaimEntry[]
     chains: ChainEntry[]
@@ -263,6 +264,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
         logo_url: tenant.logo_url ?? '',
         accent_color: tenant.accent_color,
         namestone_api_key: tenant.namestone_api_key,
+        billing_email: tenant.billing_email ?? '',
         gate_type: tenant.gate_type,
         contract_address: tenant.contract_address ?? '',
         collection_slug: tenant.collection_slug ?? '',
@@ -852,6 +854,22 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     <input type="color" value={form.accent_color} onChange={e => set('accent_color', e.target.value)}
                                         style={{ width: '44px', height: '40px', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '6px' }} />
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Notifications */}
+                        <div style={card}>
+                            <h2 style={{ color: COLORS.text, fontSize: '1rem', fontWeight: 'bold', marginBottom: '4px' }}>Notifications</h2>
+                            <p style={{ color: COLORS.dim, fontSize: '0.8rem', marginBottom: '14px', marginTop: 0 }}>Receive emails when your plan changes or your subdomain limit is reached.</p>
+                            <div>
+                                <label style={labelStyle}>Notification email</label>
+                                <input
+                                    type="email"
+                                    style={inputStyle}
+                                    value={form.billing_email}
+                                    onChange={e => set('billing_email', e.target.value)}
+                                    placeholder="you@example.com"
+                                />
                             </div>
                         </div>
 
