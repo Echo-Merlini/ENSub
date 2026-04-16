@@ -325,25 +325,40 @@ export default function Home() {
                             num: '01',
                             title: 'Verify & configure',
                             desc: 'Connect your wallet — we check on-chain that you own the ENS domain. Set your gate type (open, NFT, token, allowlist), logo, and accent colour.',
+                            logos: (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <img src="/images/ens-logo.svg" alt="ENS" style={{ height: '18px', opacity: 0.7 }} />
+                                    <img src="/images/namestone-logo.png" alt="Namestone" style={{ height: '16px', opacity: 0.7 }} />
+                                </div>
+                            ),
                         },
                         {
                             num: '02',
                             title: 'Add L2 chains (optional)',
                             desc: 'Deploy an L2Registry + ENSub registrar on any supported chain in one click — Base, Optimism, Arbitrum, Polygon, Linea, Scroll, Celo, or World Chain. Set a mint price, treasury address, and per-wallet limits.',
+                            logos: (
+                                <img src="/images/durin-logo.svg" alt="Durin" style={{ height: '20px', opacity: 0.7 }} />
+                            ),
                         },
                         {
                             num: '03',
                             title: 'Share & watch it grow',
                             desc: 'Your page is live at ensub.org/claim/yourname. Community members claim gaslessly via Namestone or mint an on-chain NFT on any chain you configured.',
+                            logos: (
+                                <img src="/images/ensub-logo.gif" alt="ENSub" style={{ height: '24px', width: '24px', borderRadius: '6px', opacity: 0.85 }} />
+                            ),
                         },
                     ].map(step => (
                         <div key={step.num} style={card()}>
-                            <div style={{
-                                fontSize: '2rem', fontWeight: 'bold',
-                                color: ACCENT, opacity: 0.3,
-                                marginBottom: '16px', fontFamily: 'monospace',
-                            }}>
-                                {step.num}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                <div style={{
+                                    fontSize: '2rem', fontWeight: 'bold',
+                                    color: ACCENT, opacity: 0.3,
+                                    fontFamily: 'monospace',
+                                }}>
+                                    {step.num}
+                                </div>
+                                {step.logos}
                             </div>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text)', marginBottom: '10px' }}>
                                 {step.title}
