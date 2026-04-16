@@ -1570,7 +1570,7 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                         {!['pro','business'].includes(tenant.plan) && (
                                             <a href={`/pricing?slug=${tenant.slug}`}
                                                 style={{ fontSize: '0.7rem', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '2px 10px', textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
-                                                🔒 Business plan
+                                                🔒 Pro/Business
                                             </a>
                                         )}
                                     </div>
@@ -1591,9 +1591,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                                     </code>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' as const }}>
                                         <button
-                                            onClick={tenant.plan === 'business' ? handleSetResolver : undefined}
+                                            onClick={['pro','business'].includes(tenant.plan) ? handleSetResolver : undefined}
                                             disabled={ensResolutionSaving || !['pro','business'].includes(tenant.plan)}
-                                            title={!['pro','business'].includes(tenant.plan) ? 'On-chain ENS resolution requires a Business plan' : undefined}
+                                            title={!['pro','business'].includes(tenant.plan) ? 'On-chain ENS resolution requires a Pro or Business plan' : undefined}
                                             style={{ padding: '7px 14px', background: !['pro','business'].includes(tenant.plan) ? 'var(--row-bg)' : `${accent}18`, border: `1px solid ${!['pro','business'].includes(tenant.plan) ? 'var(--card-border)' : accent + '44'}`, color: !['pro','business'].includes(tenant.plan) ? COLORS.dim : accent, borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8rem', cursor: (ensResolutionSaving || !['pro','business'].includes(tenant.plan)) ? 'not-allowed' : 'pointer', opacity: ensResolutionSaving ? 0.6 : 1, whiteSpace: 'nowrap' as const }}>
                                             {ensResolutionSaving && ensResolutionStep.includes('resolver') ? `⟳ ${ensResolutionStep}` : 'Set resolver (mainnet tx)'}
                                         </button>
