@@ -631,7 +631,7 @@ function ClaimForm({ tenant }: { tenant: Tenant }) {
                 <span>
                     {isL2
                         ? `On-chain NFT · ${selectedChain!.chain_name}`
-                        : `No gas required${tenant.plan === 'free' ? ' · Powered by ENSub' : ''}`}
+                        : 'No gas required'}
                 </span>
                 <span>{tenant.claims_count}/{tenant.claim_limit} claimed</span>
             </div>
@@ -725,7 +725,7 @@ export default function Claim({ tenant }: { tenant: Tenant }) {
                                         Why claim a subdomain?
                                     </p>
                                     <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.65, margin: 0 }}>
-                                        <img src="/images/ens-logo.svg" alt="" style={{ height: '12px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.8 }} />ENS subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
+                                        <img src="/images/ens-logo.svg" alt="ENS" style={{ height: '12px', verticalAlign: 'middle', display: 'inline-block', marginRight: '4px', opacity: 0.8 }} /> subdomains are on-chain identities built on the Ethereum Name Service — the decentralised naming standard of the web.
                                         Claiming yours gives your wallet a human-readable name you actually own, not just a username on a platform.
                                     </p>
                                     <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '5px' }}>

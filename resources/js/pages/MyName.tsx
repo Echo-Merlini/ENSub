@@ -182,7 +182,9 @@ function MyNameContent({ tenant }: { tenant: Tenant }) {
                     )}
 
                     <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#2a2a2a' }}>
-                        Powered by <a href="/" style={{ color: '#3a3a3a', textDecoration: 'underline' }}>ENSub</a>
+                        Powered by <a href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}>
+                            <img src="/images/ensub-logo.png" alt="ENSub" style={{ height: '14px', opacity: 0.55 }} />
+                        </a>
                     </p>
                 </div>
             </div>

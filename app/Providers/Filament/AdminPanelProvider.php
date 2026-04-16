@@ -27,6 +27,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('ENS.sub Admin')
+            ->brandLogo(asset('images/ensub-logo.png'))
+            ->brandLogoHeight('28px')
             ->colors([
                 'primary' => Color::Amber,
             ])

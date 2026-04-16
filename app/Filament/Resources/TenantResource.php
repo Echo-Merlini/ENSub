@@ -39,7 +39,9 @@ class TenantResource extends Resource
                 ->schema([
                     Forms\Components\TextInput::make('namestone_api_key')
                         ->password()->revealable()
-                        ->label('Namestone API Key'),
+                        ->label('Namestone API Key')
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->helperText('Leave blank to keep existing key'),
                     Forms\Components\TextInput::make('logo_url')
                         ->url()->placeholder('https://...'),
                     Forms\Components\ColorPicker::make('accent_color')

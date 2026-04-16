@@ -1205,7 +1205,10 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
 
                             {/* Offchain always-on row */}
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--row-border)' }}>
-                                <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>Ξ ETH — Gasless</span>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <img src="https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg" width={18} height={18} alt="Ethereum" style={{ borderRadius: '50%', verticalAlign: 'middle' }} />
+                                    ETH — Gasless
+                                </span>
                                 <span style={{ fontSize: '0.75rem', color: '#00c850', background: 'rgba(0,200,80,0.12)', border: '1px solid rgba(0,200,80,0.25)', borderRadius: '4px', padding: '2px 8px' }}>Always on</span>
                             </div>
 
@@ -1682,7 +1685,9 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
                 )}
 
                 <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                    Powered by <a href="/" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>ENSub</a>
+                    Powered by <a href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', verticalAlign: 'middle' }}>
+                        <img src="/images/ensub-logo.png" alt="ENSub" style={{ height: '14px', opacity: 0.65 }} />
+                    </a>
                 </p>
             </div>
         </main>
