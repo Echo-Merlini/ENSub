@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, createConfig, http } from 'wagmi'
+import { WagmiProvider, useAccount, useWriteContract, useSwitchChain, useChainId, useReadContract, createConfig, http } from 'wagmi'
 import { waitForTransactionReceipt, deployContract, readContract, getChainId } from '@wagmi/core'
-import { decodeEventLog, namehash } from 'viem'
+import { decodeEventLog, namehash, keccak256, toBytes } from 'viem'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, ConnectButton, connectorsForWallets, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { injectedWallet, metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets'
@@ -251,6 +251,61 @@ const labelStyle = {
     marginBottom: '5px',
     letterSpacing: '0.05em',
 } as const
+
+const ENS_BASE_REGISTRAR = '0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85' as const
+const BASE_REGISTRAR_ABI = [
+    { name: 'nameExpires', type: 'function', stateMutability: 'view', inputs: [{ name: 'id', type: 'uint256' }], outputs: [{ type: 'uint256' }] },
+] as const
+
+function RenewalBanner({ ensDomain, accent }: { ensDomain: string; accent: string }) {
+    const label = ensDomain.replace(/\.eth$/i, '')
+    const tokenId = BigInt(keccak256(toBytes(label)))
+
+    const { data: expiresAt } = useReadContract({
+        address: ENS_BASE_REGISTRAR,
+        abi: BASE_REGISTRAR_ABI,
+        functionName: 'nameExpires',
+        args: [tokenId],
+        chainId: 1,
+    })
+
+    if (!expiresAt) return null
+
+    const expiresMs = Number(expiresAt) * 1000
+    const daysLeft = Math.floor((expiresMs - Date.now()) / 86_400_000)
+
+    if (daysLeft > 90) return null
+
+    const isExpired = daysLeft <= 0
+    const color = isExpired ? '#e05252' : '#f5a623'
+    const bg    = isExpired ? 'rgba(224,82,82,0.08)' : 'rgba(245,166,35,0.08)'
+    const border = isExpired ? 'rgba(224,82,82,0.3)' : 'rgba(245,166,35,0.3)'
+    const msg = isExpired
+        ? `⚠️ ${ensDomain} has expired! Renew immediately to keep your subdomains active.`
+        : `⚠️ ${ensDomain} expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — renew soon to avoid losing your subdomains.`
+
+    return (
+        <div style={{
+            background: bg, border: `1px solid ${border}`, borderRadius: '10px',
+            padding: '12px 16px', display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
+        }}>
+            <span style={{ fontSize: '0.85rem', color, fontWeight: 600 }}>{msg}</span>
+            <a
+                href={`https://app.ens.domains/name/${ensDomain}?tab=register&referrer=0x27958d7791140ab141363330a6BD1B76622a09D7`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                    flexShrink: 0, padding: '6px 14px', borderRadius: '6px',
+                    background: color, color: '#000', fontWeight: 700,
+                    fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap',
+                }}
+            >
+                Renew now →
+            </a>
+        </div>
+    )
+}
 
 function ManageContent({ tenant }: { tenant: TenantData }) {
     const { address, isConnected } = useAccount()
@@ -787,6 +842,8 @@ function ManageContent({ tenant }: { tenant: TenantData }) {
             </header>
 
             <div style={{ maxWidth: '640px', margin: '0 auto', padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                <RenewalBanner ensDomain={tenant.ens_domain} accent={accent} />
 
                 {/* Stats bar */}
                 <div style={{ ...card, display: 'flex', gap: '24px' }}>

@@ -316,6 +316,17 @@ function Step2({ onDone }: { onDone: (ensDomain: string) => void }) {
                     onChange={e => { setDomain(e.target.value); setError('') }}
                     onKeyDown={e => e.key === 'Enter' && handleCheck()}
                 />
+                <p style={{ marginTop: '6px', fontSize: '0.75rem', color: '#555' }}>
+                    Don't have a .eth name yet?{' '}
+                    <a
+                        href="https://app.ens.domains/?referrer=0x27958d7791140ab141363330a6BD1B76622a09D7"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: ACCENT, textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                    >
+                        Register one →
+                    </a>
+                </p>
             </div>
 
             {error && <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>}
