@@ -316,8 +316,10 @@ function Step2({ onDone }: { onDone: (ensDomain: string) => void }) {
                     onChange={e => { setDomain(e.target.value); setError('') }}
                     onKeyDown={e => e.key === 'Enter' && handleCheck()}
                 />
-                <p style={{ marginTop: '6px', fontSize: '0.75rem', color: '#555' }}>
-                    Don't have a .eth name yet?{' '}
+                <p style={{ marginTop: '6px', fontSize: '0.75rem', color: '#555', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                    Don't have a
+                    <img src="/images/ens-logo.svg" alt="ENS" style={{ height: '12px', verticalAlign: 'middle', opacity: 0.8 }} />
+                    .eth name yet?{' '}
                     <a
                         href="https://app.ens.domains/?referrer=0x27958d7791140ab141363330a6BD1B76622a09D7"
                         target="_blank"
